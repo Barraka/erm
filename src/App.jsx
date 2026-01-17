@@ -8,12 +8,14 @@ import ManageScreen from "./components/ManageScreen";
 import hintSoundDefault from "./assets/hint.mp3";
 import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset } from './utils/soundEffectsDB';
 import SoundEffectPlayer from "./components/SoundEffectPlayer";
-import useTimer from "./hooks/useTimer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
+import { TimerProvider, useTimerContext } from "./contexts/TimerContext";
 
 
-function App() {
+function AppContent() {
+  const { time, isRunning } = useTimerContext();
+
   const [inputValue, setInputValue] = useState("");
   const [hint, setHint] = useState("");
   const [playerWindow, setPlayerWindow] = useState(null);
@@ -30,20 +32,6 @@ function App() {
   const defaultTrackRef = useRef(null);
   const [endingTrack, setEndingTrack] = useState(null);
   const [endingThreshold, setEndingThreshold] = useState(300);
-
-  const {
-    time,
-    realTime,
-    resetTimer,
-    seconds,
-    setSeconds,
-    isRunning,
-    setIsRunning,
-  } = useTimer(60 * 60);
-
-  const handleAddTime = (delta) => {
-    setSeconds((prev) => Math.max(0, prev + delta));
-  };
 
   const [predefinedHints, setPredefinedHints] = useState([]);
 
@@ -201,6 +189,18 @@ function App() {
     await saveAsset("endingTrackThreshold", value);
   };
 
+  // Callback for TimerDisplay - start music when timer starts
+  const handleTimerStart = () => {
+    if (backgroundTracks.length > 0 && !activeTrackKey) {
+      playTrack(backgroundTracks[0]);
+    }
+  };
+
+  // Callback for TimerDisplay - stop music when timer resets
+  const handleTimerReset = () => {
+    stopTrack();
+  };
+
   return (
     <div className="p-8 bg-slate-600 min-h-screen">
       <div className="flex items-center justify-between bg-slate-400 p-4 rounded-md mb-6">
@@ -242,24 +242,8 @@ function App() {
       />
 
       <TimerDisplay
-        time={time}
-        realTime={realTime}
-        onStart={() => {
-          setIsRunning(true);
-          if (backgroundTracks.length > 0 && !activeTrackKey) {
-            playTrack(backgroundTracks[0]);
-          }
-        }}
-        onPause={() => {
-          setIsRunning(false);
-        }}
-        onReset={() => {
-          setIsRunning(false);
-          setSeconds(60 * 60);
-          resetTimer();  
-          stopTrack();
-        }}
-        onAddTime={handleAddTime}
+        onStart={handleTimerStart}
+        onReset={handleTimerReset}
       />
 
       <BackgroundMusicPlayer
@@ -280,7 +264,7 @@ function App() {
         setHint={setHint}
         predefinedHints={predefinedHints}
         updateHints={updateHints}
-        deleteHint={deleteHint} 
+        deleteHint={deleteHint}
         hintSound={hintSound}
         defaultSound={hintSoundDefault}
       />
@@ -294,6 +278,14 @@ function App() {
         />
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <TimerProvider initialSeconds={60 * 60}>
+      <AppContent />
+    </TimerProvider>
   );
 }
 

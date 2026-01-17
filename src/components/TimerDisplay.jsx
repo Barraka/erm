@@ -1,8 +1,25 @@
 import addIcon from '../assets/add.png';
-import minusIcon from '../assets/minus.png'; // note spelling if intentional
+import minusIcon from '../assets/minus.png';
+import { useTimerContext } from '../contexts/TimerContext';
 
-export default function TimerDisplay({ time, realTime, onStart, onPause, onReset, onAddTime }) {
+export default function TimerDisplay({ onStart, onPause, onReset }) {
+  const { time, realTime, addTime, start, pause, reset } = useTimerContext();
   const [minutes, seconds] = time.split(":").map(Number);
+
+  const handleStart = () => {
+    start();
+    onStart && onStart();
+  };
+
+  const handlePause = () => {
+    pause();
+    onPause && onPause();
+  };
+
+  const handleReset = () => {
+    reset();
+    onReset && onReset();
+  };
 
   return (
     <div className="text-center my-8">
@@ -11,7 +28,7 @@ export default function TimerDisplay({ time, realTime, onStart, onPause, onReset
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onAddTime(-60)}
+              onClick={() => addTime(-60)}
               className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
             >
               <img src={minusIcon} alt="minus" className="w-4 h-4" />
@@ -19,7 +36,7 @@ export default function TimerDisplay({ time, realTime, onStart, onPause, onReset
 
             <span>{minutes.toString().padStart(2, "0")}</span>
             <button
-              onClick={() => onAddTime(60)}
+              onClick={() => addTime(60)}
               className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
             >
               <img src={addIcon} alt="add" className="w-4 h-4" />
@@ -34,14 +51,14 @@ export default function TimerDisplay({ time, realTime, onStart, onPause, onReset
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onAddTime(-10)}
+              onClick={() => addTime(-10)}
               className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
             >
               <img src={minusIcon} alt="minus" className="w-4 h-4" />
             </button>
             <span>{seconds.toString().padStart(2, "0")}</span>
             <button
-              onClick={() => onAddTime(10)}
+              onClick={() => addTime(10)}
               className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
             >
               <img src={addIcon} alt="add" className="w-4 h-4" />
@@ -56,15 +73,15 @@ export default function TimerDisplay({ time, realTime, onStart, onPause, onReset
         {realTime}
       </p>
 
-      {/* Control buttons (unchanged) */}
+      {/* Control buttons */}
       <div className="mt-6 space-x-2">
-        <button onClick={onStart} className="bg-green-500 text-white px-5 py-2 rounded shadow hover:bg-green-600">
+        <button onClick={handleStart} className="bg-green-500 text-white px-5 py-2 rounded shadow hover:bg-green-600">
           Start
         </button>
-        <button onClick={onPause} className="bg-yellow-500 text-white px-5 py-2 rounded shadow hover:bg-yellow-600">
+        <button onClick={handlePause} className="bg-yellow-500 text-white px-5 py-2 rounded shadow hover:bg-yellow-600">
           Pause
         </button>
-        <button onClick={onReset} className="bg-red-500 text-white px-5 py-2 rounded shadow hover:bg-red-600">
+        <button onClick={handleReset} className="bg-red-500 text-white px-5 py-2 rounded shadow hover:bg-red-600">
           Reset
         </button>
       </div>
