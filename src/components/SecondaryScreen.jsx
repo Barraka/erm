@@ -67,7 +67,7 @@ function PlayerContent({ time, hint, backgroundImage }) {
   );
 }
 
-export default function SecondaryScreen({ container, hint, time, backgroundImage }) {
+export default function SecondaryScreen({ container, hint, time, backgroundImage, onWindowClosed }) {
   const rootRef = useRef(null);
 
   // Create/unmount the portal root
@@ -77,20 +77,56 @@ export default function SecondaryScreen({ container, hint, time, backgroundImage
     }
     return () => {
       if (rootRef.current) {
-        rootRef.current.unmount();
+        try {
+          rootRef.current.unmount();
+        } catch (e) {
+          // Window may already be closed, ignore unmount errors
+        }
         rootRef.current = null;
       }
     };
   }, [container]);
 
-  // Render whenever inputs change
+  // Monitor if the secondary window is closed externally
   useEffect(() => {
-    if (rootRef.current) {
+    if (!container) return;
+
+    const ownerWindow = container.ownerDocument?.defaultView;
+    if (!ownerWindow) return;
+
+    const checkInterval = setInterval(() => {
+      if (ownerWindow.closed) {
+        clearInterval(checkInterval);
+        if (rootRef.current) {
+          rootRef.current = null;
+        }
+        onWindowClosed?.();
+      }
+    }, 500);
+
+    return () => clearInterval(checkInterval);
+  }, [container, onWindowClosed]);
+
+  // Render whenever inputs change, but check if window is still valid
+  useEffect(() => {
+    if (!rootRef.current) return;
+
+    // Check if the container's window is still open
+    const ownerWindow = container?.ownerDocument?.defaultView;
+    if (ownerWindow?.closed) {
+      rootRef.current = null;
+      return;
+    }
+
+    try {
       rootRef.current.render(
         <PlayerContent hint={hint} time={time} backgroundImage={backgroundImage} />
       );
+    } catch (e) {
+      // Window may have been closed, ignore render errors
+      console.warn("SecondaryScreen render failed:", e);
     }
-  }, [hint, time, backgroundImage]);
+  }, [container, hint, time, backgroundImage]);
 
   return null;
 }

@@ -5,6 +5,7 @@ import { useToast } from "../ToastProvider";
 
 const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const VALID_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/x-m4a'];
 
 export default function SoundEffectPicker({ onAdded }) {
   const [file, setFile] = useState(null);
@@ -13,10 +14,19 @@ export default function SoundEffectPicker({ onAdded }) {
   const { showToast } = useToast();
 
   const handleFileSelected = (selected) => {
-    if (selected && selected.size > MAX_FILE_SIZE_BYTES) {
+    if (!selected) return;
+
+    if (selected.size > MAX_FILE_SIZE_BYTES) {
       showToast(`Fichier trop volumineux (max ${MAX_FILE_SIZE_MB}MB)`, "error");
       return;
     }
+
+    // Validate audio file type
+    if (!VALID_AUDIO_TYPES.includes(selected.type) && !selected.type.startsWith('audio/')) {
+      showToast("Format audio invalide. Utilisez MP3, WAV, OGG ou M4A.", "error");
+      return;
+    }
+
     setFile(selected);
   };
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import arrowImg from "../assets/arrow.png";
 import Controls from "./Controls";
 
@@ -16,23 +16,46 @@ export default function BackgroundMusicPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
+  // Track previous blob URLs to properly revoke them when tracks change
+  const prevUrlsRef = useRef(new Set());
+
   // Keep local activeKey in sync with prop (so auto-started track becomes active)
   useEffect(() => {
     setActiveKey(activeTrackKey || null);
   }, [activeTrackKey]);
 
   // Build { key -> { name, blob, _url } } for local plays
+  // Properly manage blob URL lifecycle to prevent memory leaks
   const trackMap = useMemo(() => {
     const m = new Map();
-    tracks.forEach((t) => m.set(t.key, { ...t, _url: URL.createObjectURL(t.blob) }));
+    const newUrls = new Set();
+
+    tracks.forEach((t) => {
+      if (t.blob instanceof Blob) {
+        const url = URL.createObjectURL(t.blob);
+        m.set(t.key, { ...t, _url: url });
+        newUrls.add(url);
+      }
+    });
+
+    // Revoke old URLs that are no longer in use
+    prevUrlsRef.current.forEach((oldUrl) => {
+      if (!newUrls.has(oldUrl)) {
+        URL.revokeObjectURL(oldUrl);
+      }
+    });
+    prevUrlsRef.current = newUrls;
+
     return m;
   }, [tracks]);
 
+  // Cleanup all URLs on unmount
   useEffect(() => {
     return () => {
-      trackMap.forEach(({ _url }) => URL.revokeObjectURL(_url));
+      prevUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      prevUrlsRef.current.clear();
     };
-  }, [trackMap]);
+  }, []);
 
   // Just read state from the shared audio element; do NOT try to deduce which track by URL
   useEffect(() => {

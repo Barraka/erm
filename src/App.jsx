@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import TimerDisplay from "./components/TimerDisplay";
 import SecondaryScreen from "./components/SecondaryScreen";
 import SettingsModal from "./components/SettingsModal";
@@ -11,10 +11,12 @@ import SoundEffectPlayer from "./components/SoundEffectPlayer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
 import { TimerProvider, useTimerContext } from "./contexts/TimerContext";
+import { useToast } from "./components/ToastProvider";
 
 
 function AppContent() {
   const { time, isRunning } = useTimerContext();
+  const { showToast } = useToast();
 
   const [inputValue, setInputValue] = useState("");
   const [hint, setHint] = useState("");
@@ -37,36 +39,42 @@ function AppContent() {
 
   useEffect(() => {
     async function loadInitialData() {
-      const stored = await getHints();
-      if (stored.length > 0) {
-        setPredefinedHints(stored);
-      } else {
+      try {
+        const stored = await getHints();
+        if (stored.length > 0) {
+          setPredefinedHints(stored);
+        } else {
+          setPredefinedHints(defaultHints);
+          await saveHints(defaultHints);
+        }
+
+        const bg = await getAsset('backgroundImage');
+        const sound = await getAsset('hintSound');
+        if (bg) setBackgroundImage(bg);
+        if (sound) setHintSound(sound);
+
+        const effects = await getAllSoundEffects();
+        setSoundEffects(effects);
+
+        const musicTracks = filterMusicTracks(effects);
+        setBackgroundTracks(musicTracks);
+        if (musicTracks.length > 0) {
+          defaultTrackRef.current = musicTracks[0];
+        }
+
+        const storedThreshold = await getAsset("endingTrackThreshold");
+        if (storedThreshold != null) {
+          setEndingThreshold(storedThreshold);
+        }
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+        showToast("Erreur de chargement des données. Utilisation des valeurs par défaut.", "error");
         setPredefinedHints(defaultHints);
-        await saveHints(defaultHints);
-      }
-
-      const bg = await getAsset('backgroundImage');
-      const sound = await getAsset('hintSound');
-      if (bg) setBackgroundImage(bg);
-      if (sound) setHintSound(sound);
-
-      const effects = await getAllSoundEffects();
-      setSoundEffects(effects);
-
-      const musicTracks = filterMusicTracks(effects);
-      setBackgroundTracks(musicTracks);
-      if (musicTracks.length > 0) {
-        defaultTrackRef.current = musicTracks[0];
-      }
-
-      const storedThreshold = await getAsset("endingTrackThreshold");
-      if (storedThreshold != null) {
-        setEndingThreshold(storedThreshold);
       }
     }
 
     loadInitialData();
-  }, []);
+  }, [showToast]);
 
   const updateHints = async (index, value) => {
     const newHints = [...predefinedHints];
@@ -139,7 +147,10 @@ function AppContent() {
 
   const openPlayerWindow = () => {
     const win = window.open("", "PlayerScreen", "width=800,height=600");
-    if (!win) return;
+    if (!win) {
+      showToast("Pop-up bloqué. Veuillez autoriser les pop-ups pour utiliser l'écran secondaire.", "error");
+      return;
+    }
 
     win.document.title = "Escape Room Screen";
     win.document.body.style.backgroundColor = "white";
@@ -171,13 +182,19 @@ function AppContent() {
     setPlayerWindow(win);
   };
 
-  const closePlayerWindow = () => {
+  const closePlayerWindow = useCallback(() => {
     if (playerWindow && !playerWindow.closed) {
       playerWindow.close();
-      setPlayerWindow(null);
-      containerRef.current = null;
     }
-  };
+    setPlayerWindow(null);
+    containerRef.current = null;
+  }, [playerWindow]);
+
+  // Called when the secondary window is closed externally (user clicks X)
+  const handleSecondaryWindowClosed = useCallback(() => {
+    setPlayerWindow(null);
+    containerRef.current = null;
+  }, []);
 
   const handleEndingTrackChange = async (value) => {
     setEndingTrack(value);
@@ -275,6 +292,7 @@ function AppContent() {
           hint={hint}
           time={time}
           backgroundImage={backgroundImage}
+          onWindowClosed={handleSecondaryWindowClosed}
         />
       )}
     </div>

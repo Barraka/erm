@@ -12,29 +12,51 @@ export default function SoundEffectPlayer({
 
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Track previous blob URLs to properly revoke them when effects change
+  const prevUrlsRef = useRef(new Set());
+
+  // Build { key -> { name, blob, _url } } for effects
+  // Properly manage blob URL lifecycle to prevent memory leaks
   const effectMap = useMemo(() => {
     const m = new Map();
+    const newUrls = new Set();
+
     for (const e of effects) {
       if (!e) continue;
-      const url =
-        e._url ??
-        (typeof e.blob === "string"
-          ? e.blob
-          : e.blob instanceof Blob
-          ? URL.createObjectURL(e.blob)
-          : null);
+      let url = e._url;
+
+      if (!url) {
+        if (typeof e.blob === "string") {
+          url = e.blob; // Already a URL string
+        } else if (e.blob instanceof Blob) {
+          url = URL.createObjectURL(e.blob);
+          newUrls.add(url);
+        }
+      } else if (url.startsWith("blob:")) {
+        newUrls.add(url);
+      }
+
       m.set(e.key, { ...e, _url: url });
     }
+
+    // Revoke old blob URLs that are no longer in use
+    prevUrlsRef.current.forEach((oldUrl) => {
+      if (!newUrls.has(oldUrl)) {
+        URL.revokeObjectURL(oldUrl);
+      }
+    });
+    prevUrlsRef.current = newUrls;
+
     return m;
   }, [effects]);
 
+  // Cleanup all URLs on unmount
   useEffect(() => {
     return () => {
-      effectMap.forEach(({ _url }) => {
-        if (_url && _url.startsWith("blob:")) URL.revokeObjectURL(_url);
-      });
+      prevUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      prevUrlsRef.current.clear();
     };
-  }, [effectMap]);
+  }, []);
 
   const instancesRef = useRef(new Map());
   const [rowState, setRowState] = useState(new Map());
@@ -50,29 +72,46 @@ export default function SoundEffectPlayer({
   useEffect(() => {
     let rafId;
     const tick = () => {
-      const next = new Map(rowState);
-      for (const eff of effects) {
-        if (!eff) continue;
-        const key = eff.key;
-        const inst = latestFor(key);
-        if (inst && !Number.isNaN(inst.duration)) {
-          next.set(key, {
-            progress: inst.currentTime || 0,
-            duration: inst.duration || 0,
-            isPlaying: !inst.paused && !inst.ended,
-            hasAny: true,
-          });
-        } else {
-          const prev = next.get(key);
-          next.set(key, {
-            progress: 0,
-            duration: prev?.duration || 0,
-            isPlaying: false,
-            hasAny: (instancesRef.current.get(key) || []).length > 0,
-          });
+      setRowState((prev) => {
+        let hasChanges = false;
+        const next = new Map(prev);
+
+        for (const eff of effects) {
+          if (!eff) continue;
+          const key = eff.key;
+          const inst = latestFor(key);
+          const prevState = prev.get(key);
+
+          let newState;
+          if (inst && !Number.isNaN(inst.duration)) {
+            newState = {
+              progress: inst.currentTime || 0,
+              duration: inst.duration || 0,
+              isPlaying: !inst.paused && !inst.ended,
+              hasAny: true,
+            };
+          } else {
+            newState = {
+              progress: 0,
+              duration: prevState?.duration || 0,
+              isPlaying: false,
+              hasAny: (instancesRef.current.get(key) || []).length > 0,
+            };
+          }
+
+          // Only update if values actually changed
+          if (!prevState ||
+              Math.abs(prevState.progress - newState.progress) > 0.05 ||
+              prevState.duration !== newState.duration ||
+              prevState.isPlaying !== newState.isPlaying ||
+              prevState.hasAny !== newState.hasAny) {
+            next.set(key, newState);
+            hasChanges = true;
+          }
         }
-      }
-      setRowState(next);
+
+        return hasChanges ? next : prev;
+      });
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
