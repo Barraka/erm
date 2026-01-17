@@ -1,5 +1,44 @@
 import { set, get, del } from 'idb-keyval';
 
+// 🟢 AUDIO TYPE UTILITIES
+// Use these instead of inline type checks to ensure consistency
+
+/**
+ * Check if an audio item is a music track
+ * @param {Object} item - Audio item with type property
+ * @returns {boolean}
+ */
+export function isMusicTrack(item) {
+  return item?.type === 'music';
+}
+
+/**
+ * Check if an audio item is a sound effect
+ * @param {Object} item - Audio item with type property
+ * @returns {boolean}
+ */
+export function isSoundEffect(item) {
+  return !item?.type || item.type === 'effect';
+}
+
+/**
+ * Filter an array to only music tracks
+ * @param {Array} items - Array of audio items
+ * @returns {Array}
+ */
+export function filterMusicTracks(items) {
+  return (items || []).filter(isMusicTrack);
+}
+
+/**
+ * Filter an array to only sound effects
+ * @param {Array} items - Array of audio items
+ * @returns {Array}
+ */
+export function filterSoundEffects(items) {
+  return (items || []).filter(isSoundEffect);
+}
+
 // 🟢 SOUND EFFECTS
 const SOUND_KEYS_INDEX = 'sound-effects-list';
 

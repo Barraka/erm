@@ -3,8 +3,9 @@ import {
   getAllSoundEffects,
   deleteSoundEffect,
   updateSoundEffectName,
+  setEndRoleByName,
+  filterSoundEffects,
 } from "../../utils/soundEffectsDB";
-import { setEndRoleByName } from "../../utils/soundEffectsDB";
 import arrowImg from "../../assets/arrow.png";
 import editImg from "../../assets/edit.png";
 import delImg from "../../assets/delete.png";
@@ -32,7 +33,7 @@ export default function SoundEffectManager({ onChange }) {
 
   const loadEffects = async () => {
     const list = await getAllSoundEffects();
-    setEffects(list.filter((e) => !e.type || e.type === "effect"));
+    setEffects(filterSoundEffects(list));
   };
 
   const handleDelete = async (name) => {
@@ -70,9 +71,7 @@ export default function SoundEffectManager({ onChange }) {
     let addedName = maybeName;
     if (!addedName) {
       const list = await getAllSoundEffects();
-      const afterNames = list
-        .filter((e) => !e.type || e.type === "effect")
-        .map((e) => e.name);
+      const afterNames = filterSoundEffects(list).map((e) => e.name);
       const diff = afterNames.filter((n) => !preAddNames.includes(n));
       addedName = diff[0];
     }

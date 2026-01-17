@@ -6,7 +6,7 @@ import cogIcon from './assets/cog.png';
 import ManageHints from "./components/ManageHints";
 import ManageScreen from "./components/ManageScreen";
 import hintSoundDefault from "./assets/hint.mp3";
-import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset } from './utils/soundEffectsDB';
+import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset, filterMusicTracks, filterSoundEffects } from './utils/soundEffectsDB';
 import SoundEffectPlayer from "./components/SoundEffectPlayer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
@@ -53,7 +53,7 @@ function AppContent() {
       const effects = await getAllSoundEffects();
       setSoundEffects(effects);
 
-      const musicTracks = effects.filter(e => e.type === 'music');
+      const musicTracks = filterMusicTracks(effects);
       setBackgroundTracks(musicTracks);
       if (musicTracks.length > 0) {
         defaultTrackRef.current = musicTracks[0];
@@ -225,7 +225,7 @@ function AppContent() {
           onSoundEffectsUpdate={async () => {
             const effects = await getAllSoundEffects();
             setSoundEffects(effects);
-            setBackgroundTracks(effects.filter(e => e.type === "music"));
+            setBackgroundTracks(filterMusicTracks(effects));
             setSoundRefreshKey(prev => prev + 1);
           }}
           refreshKey={soundRefreshKey}
@@ -255,7 +255,7 @@ function AppContent() {
         isSessionRunning={isRunning}
       />
 
-      <SoundEffectPlayer soundEffects={soundEffects.filter(s => s.type !== "music")} />
+      <SoundEffectPlayer effects={filterSoundEffects(soundEffects)} />
 
       <ManageHints
         inputValue={inputValue}

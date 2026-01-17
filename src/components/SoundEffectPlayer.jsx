@@ -3,17 +3,12 @@ import arrowImg from "../assets/arrow.png";
 import Controls from "./Controls";
 
 export default function SoundEffectPlayer({
-  effects: effectsProp,      // preferred prop
-  soundEffects,              // fallback prop name (if your App uses this)
+  effects: effectsProp = [],
   activeEffectKey,           // optional: for header summary if parent auto-triggers an SFX
-  onPauseEffect,             // optional(key)
-  onStopEffect,              // optional(key)
+  onPause,                   // optional callback when effect is paused
+  onStop,                    // optional callback when effect is stopped
 }) {
-  const effects = Array.isArray(effectsProp)
-    ? effectsProp
-    : Array.isArray(soundEffects)
-    ? soundEffects
-    : [];
+  const effects = Array.isArray(effectsProp) ? effectsProp : [];
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -160,7 +155,7 @@ export default function SoundEffectPlayer({
     const inst = latestFor(key);
     if (!inst) return;
     inst.pause();
-    onPauseEffect && onPauseEffect(key);
+    onPause && onPause(key);
     setRowState((prev) => {
       const next = new Map(prev);
       const cur = next.get(key);
@@ -174,7 +169,7 @@ export default function SoundEffectPlayer({
     if (!inst) return;
     inst.pause();
     inst.currentTime = 0;
-    onStopEffect && onStopEffect(key);
+    onStop && onStop(key);
     setRowState((prev) => {
       const next = new Map(prev);
       const cur = next.get(key);

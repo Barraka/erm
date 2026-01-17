@@ -3,6 +3,7 @@ import {
   getAllSoundEffects,
   deleteSoundEffect,
   updateSoundEffectName,
+  filterMusicTracks,
 } from "../../utils/soundEffectsDB";
 import arrowImg from "../../assets/arrow.png";
 import editImg from "../../assets/edit.png"; // your local edit icon
@@ -25,7 +26,7 @@ export default function BackgroundMusicManager({ onChange, refreshKey }) {
 
   const loadTracks = async () => {
     const list = await getAllSoundEffects();
-    setTracks(list.filter((t) => t.type === "music"));
+    setTracks(filterMusicTracks(list));
   };
 
   const handleDelete = async (name) => {
