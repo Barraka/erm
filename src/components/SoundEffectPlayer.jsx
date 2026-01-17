@@ -43,6 +43,7 @@ export default function SoundEffectPlayer({
 
   const instancesRef = useRef(new Map());
   const [rowState, setRowState] = useState(new Map());
+  const [volume, setVolume] = useState(1);
 
   const latestFor = (key) => {
     const list = instancesRef.current.get(key) || [];
@@ -114,6 +115,7 @@ export default function SoundEffectPlayer({
 
     const a = new Audio(item._url);
     a.loop = false;
+    a.volume = volume;
 
     a.addEventListener(
       "loadedmetadata",
@@ -193,6 +195,19 @@ export default function SoundEffectPlayer({
     });
   };
 
+  const handleVolumeChange = (val) => {
+    const newVolume = Number(val);
+    setVolume(newVolume);
+    // Apply to all active sound effect instances
+    instancesRef.current.forEach((list) => {
+      list.forEach((audio) => {
+        if (audio && !audio.ended) {
+          audio.volume = newVolume;
+        }
+      });
+    });
+  };
+
   // 🟢 role badge renderer (same as in SoundEffectManager)
   const roleBadge = (role) =>
     role === "victory" ? (
@@ -234,6 +249,21 @@ export default function SoundEffectPlayer({
       {/* Expanded list */}
       {isExpanded && (
         <div className="mt-4 w-full space-y-4">
+          {/* Global volume control for all effects */}
+          <div className="flex items-center gap-2 pb-3 border-b border-slate-300">
+            <span className="text-sm text-gray-600 min-w-16">Volume</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(e) => handleVolumeChange(e.target.value)}
+              className="w-32"
+            />
+            <span className="text-sm text-gray-600 w-12">{Math.round(volume * 100)}%</span>
+          </div>
+
           {effects.length === 0 && (
             <div className="text-sm text-gray-600">Aucun effet ajouté.</div>
           )}

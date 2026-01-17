@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import FilePicker from "./../FilePicker";
 import { getAsset, saveAsset } from "../../utils/soundEffectsDB";
+import { useToast } from "../ToastProvider";
+
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function BackgroundImagePicker({ onChange }) {
   const [fileName, setFileName] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => {
     async function loadName() {
@@ -21,6 +26,10 @@ export default function BackgroundImagePicker({ onChange }) {
         label="Choisir un fichier"
         accept="image/*"
         onFileSelected={(file) => {
+          if (file.size > MAX_FILE_SIZE_BYTES) {
+            showToast(`Fichier trop volumineux (max ${MAX_FILE_SIZE_MB}MB)`, "error");
+            return;
+          }
           const reader = new FileReader();
           reader.onload = async () => {
             const base64 = reader.result;

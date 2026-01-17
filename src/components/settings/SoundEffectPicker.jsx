@@ -3,11 +3,22 @@ import FilePicker from "./../FilePicker";
 import { saveSoundEffect } from "../../utils/soundEffectsDB";
 import { useToast } from "../ToastProvider";
 
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function SoundEffectPicker({ onAdded }) {
   const [file, setFile] = useState(null);
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
+
+  const handleFileSelected = (selected) => {
+    if (selected && selected.size > MAX_FILE_SIZE_BYTES) {
+      showToast(`Fichier trop volumineux (max ${MAX_FILE_SIZE_MB}MB)`, "error");
+      return;
+    }
+    setFile(selected);
+  };
 
   return (
     <div className="bg-sky-100 p-4 rounded-md w-full flex flex-col gap-2">
@@ -17,7 +28,7 @@ export default function SoundEffectPicker({ onAdded }) {
         <FilePicker
           label="Choisir un son"
           accept="audio/*"
-          onFileSelected={(selected) => setFile(selected)}
+          onFileSelected={handleFileSelected}
         />
 
         <input
@@ -36,18 +47,18 @@ export default function SoundEffectPicker({ onAdded }) {
       )}
 
       <button
+        disabled={isLoading}
         onClick={async () => {
           if (!file) {
             showToast("Aucun fichier sélectionné", "error");
-
             return;
           }
           if (!name.trim()) {
             showToast("Saisir un nom de piste", "error");
-
             return;
           }
 
+          setIsLoading(true);
           try {
             await saveSoundEffect(name.trim(), file);
             showToast("Son ajouté", "success");
@@ -57,11 +68,13 @@ export default function SoundEffectPicker({ onAdded }) {
           } catch (err) {
             console.error(err);
             showToast("Erreur lors de l'enregistrement", "error");
+          } finally {
+            setIsLoading(false);
           }
         }}
-        className="mt-2 px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-600 transition"
+        className="mt-2 px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        Valider
+        {isLoading ? "Enregistrement..." : "Valider"}
       </button>
     </div>
   );

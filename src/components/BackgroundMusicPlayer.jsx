@@ -14,6 +14,7 @@ export default function BackgroundMusicPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
 
   // Keep local activeKey in sync with prop (so auto-started track becomes active)
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function BackgroundMusicPlayer({
     if (!a.src || a.src !== item._url) {
       a.src = item._url;
       a.loop = true;
+      a.volume = volume;
       a.addEventListener("loadedmetadata", () => {
         setDuration(Number.isNaN(a.duration) ? 0 : a.duration);
       }, { once: true });
@@ -112,6 +114,13 @@ export default function BackgroundMusicPlayer({
     if (!a || Number.isNaN(a.duration)) return;
     a.currentTime = Number(val);
     setProgress(a.currentTime);
+  };
+
+  const handleVolumeChange = (val) => {
+    const newVolume = Number(val);
+    setVolume(newVolume);
+    const a = currentAudioRef.current;
+    if (a) a.volume = newVolume;
   };
 
   const resolvedActiveKey = activeKey || activeTrackKey || null;
@@ -207,6 +216,23 @@ export default function BackgroundMusicPlayer({
                     className="w-full"
                   />
                 </div>
+
+                {/* Volume control */}
+                {isActive && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm text-gray-600 min-w-16">Volume</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={volume}
+                      onChange={(e) => handleVolumeChange(e.target.value)}
+                      className="w-32"
+                    />
+                    <span className="text-sm text-gray-600 w-12">{Math.round(volume * 100)}%</span>
+                  </div>
+                )}
               </div>
             );
           })}

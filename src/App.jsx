@@ -114,6 +114,11 @@ function App() {
       backgroundAudioRef.current.pause();
     }
 
+    // Revoke previous blob URL to prevent memory leak
+    if (currentTrackURL) {
+      URL.revokeObjectURL(currentTrackURL);
+    }
+
     const src = URL.createObjectURL(track.blob);
     const audio = new Audio(src);
     audio.loop = true;
@@ -135,6 +140,10 @@ function App() {
       backgroundAudioRef.current.pause();
       backgroundAudioRef.current.currentTime = 0;
       backgroundAudioRef.current = null;
+    }
+    // Revoke blob URL to prevent memory leak
+    if (currentTrackURL) {
+      URL.revokeObjectURL(currentTrackURL);
     }
     setCurrentTrackURL(null);
     setActiveTrackKey(null);
