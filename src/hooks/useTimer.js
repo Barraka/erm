@@ -102,5 +102,6 @@ export default function useTimer(initialSeconds = 60 * 60) {
     isRunning,
     setIsRunning, // Start/Pause for main timer
     resetTimer,   // resets both
+    sessionActive, // true once session started, stays true until reset
   };
 }

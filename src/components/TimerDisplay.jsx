@@ -2,7 +2,7 @@ import { Plus, Minus, Play, Pause, Square } from 'lucide-react';
 import { useTimerContext } from '../contexts/TimerContext';
 
 export default function TimerDisplay({ onStart, onEndSession }) {
-  const { time, realTime, addTime, start, pause, isRunning } = useTimerContext();
+  const { time, realTime, addTime, start, pause, isRunning, sessionActive } = useTimerContext();
   const [minutes, seconds] = time.split(":").map(Number);
 
   const handleStart = () => {
@@ -113,37 +113,51 @@ export default function TimerDisplay({ onStart, onEndSession }) {
 
       {/* Control buttons */}
       <div className="mt-6 flex justify-center gap-3" role="group" aria-label="Contrôles du minuteur">
-        <button
-          onClick={handleStart}
-          aria-label="Démarrer le minuteur"
-          className="btn btn-success px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
-        >
-          <Play size={18} />
-          Start
-        </button>
-        <button
-          onClick={handlePause}
-          aria-label="Mettre en pause le minuteur"
-          className="btn btn-warning px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
-        >
-          <Pause size={18} />
-          Pause
-        </button>
-        <button
-          onClick={handleEndSession}
-          disabled={!isRunning}
-          aria-label="Terminer la session"
-          className={`px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2 transition-all duration-200 ${
-            isRunning ? 'btn btn-danger' : 'opacity-50 cursor-not-allowed'
-          }`}
-          style={!isRunning ? {
-            backgroundColor: 'var(--color-bg-tertiary)',
-            color: 'var(--color-text-muted)'
-          } : undefined}
-        >
-          <Square size={18} />
-          Fin de Session
-        </button>
+        {!sessionActive ? (
+          <button
+            onClick={handleStart}
+            aria-label="Débuter la session"
+            className="btn btn-success px-8 py-3 text-lg font-semibold rounded-xl flex items-center gap-2"
+          >
+            <Play size={20} />
+            Débuter Session
+          </button>
+        ) : (
+          <>
+            {isRunning ? (
+              <button
+                onClick={handlePause}
+                aria-label="Mettre en pause le minuteur"
+                className="btn btn-warning px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
+              >
+                <Pause size={18} />
+                Pause
+              </button>
+            ) : (
+              <button
+                onClick={handleStart}
+                aria-label="Reprendre le minuteur"
+                className="btn btn-success px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
+              >
+                <Play size={18} />
+                Reprendre
+              </button>
+            )}
+            <button
+              onClick={handleEndSession}
+              aria-label="Terminer la session"
+              className="px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2 transition-all duration-200"
+              style={{
+                backgroundColor: 'var(--color-danger)',
+                color: 'white',
+                border: 'none'
+              }}
+            >
+              <Square size={18} />
+              Fin de Session
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

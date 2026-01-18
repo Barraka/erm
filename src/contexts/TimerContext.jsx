@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useState } from "react";
+import { createContext, useContext, useCallback, useState, useRef } from "react";
 import useTimer from "../hooks/useTimer";
 
 const TimerContext = createContext(null);
@@ -6,6 +6,10 @@ const TimerContext = createContext(null);
 export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
   const [roomDuration, setRoomDuration] = useState(initialSeconds);
   const timer = useTimer(initialSeconds);
+
+  // Use ref to track isRunning without causing callback recreation
+  const isRunningRef = useRef(timer.isRunning);
+  isRunningRef.current = timer.isRunning;
 
   const addTime = useCallback((delta) => {
     timer.setSeconds((prev) => Math.max(0, prev + delta));
@@ -26,13 +30,14 @@ export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
   }, [timer.setIsRunning, timer.setSeconds, timer.resetTimer, roomDuration]);
 
   // Update room duration and reset timer to new duration
+  // Uses ref to check isRunning to keep callback stable (no dependency on timer.isRunning)
   const updateRoomDuration = useCallback((newDuration) => {
     setRoomDuration(newDuration);
     // Only update current time if timer is not running
-    if (!timer.isRunning) {
+    if (!isRunningRef.current) {
       timer.setSeconds(newDuration);
     }
-  }, [timer.isRunning, timer.setSeconds]);
+  }, [timer.setSeconds]);
 
   const value = {
     // State
@@ -40,6 +45,7 @@ export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
     realTime: timer.realTime,
     seconds: timer.seconds,
     isRunning: timer.isRunning,
+    sessionActive: timer.sessionActive,
     roomDuration,
     // Actions
     addTime,
