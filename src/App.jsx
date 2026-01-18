@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Settings } from "lucide-react";
 import TimerDisplay from "./components/TimerDisplay";
 import SecondaryScreen from "./components/SecondaryScreen";
 import SettingsModal from "./components/SettingsModal";
-import cogIcon from './assets/cog.png';
 import ManageHints from "./components/ManageHints";
 import ManageScreen from "./components/ManageScreen";
+import EndSessionModal from "./components/EndSessionModal";
 import hintSoundDefault from "./assets/hint.mp3";
-import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset, filterMusicTracks, filterSoundEffects } from './utils/soundEffectsDB';
+import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset, filterMusicTracks, filterSoundEffects, saveSession } from './utils/soundEffectsDB';
 import SoundEffectPlayer from "./components/SoundEffectPlayer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
@@ -15,7 +16,7 @@ import { useToast } from "./components/ToastProvider";
 
 
 function AppContent() {
-  const { time, isRunning } = useTimerContext();
+  const { time, seconds, isRunning, roomDuration, updateRoomDuration, reset } = useTimerContext();
   const { showToast } = useToast();
 
   const [inputValue, setInputValue] = useState("");
@@ -23,6 +24,8 @@ function AppContent() {
   const [playerWindow, setPlayerWindow] = useState(null);
   const containerRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showEndSessionModal, setShowEndSessionModal] = useState(false);
+  const [hintsGivenCount, setHintsGivenCount] = useState(0);
   const [backgroundImage, setBackgroundImage] = useState(null);
   const backgroundAudioRef = useRef(null);
   const [soundEffects, setSoundEffects] = useState([]);
@@ -66,6 +69,11 @@ function AppContent() {
         if (storedThreshold != null) {
           setEndingThreshold(storedThreshold);
         }
+
+        const storedRoomDuration = await getAsset("roomDuration");
+        if (storedRoomDuration != null) {
+          updateRoomDuration(storedRoomDuration);
+        }
       } catch (error) {
         console.error("Failed to load initial data:", error);
         showToast("Erreur de chargement des données. Utilisation des valeurs par défaut.", "error");
@@ -74,7 +82,8 @@ function AppContent() {
     }
 
     loadInitialData();
-  }, [showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showToast, updateRoomDuration]);
 
   const updateHints = async (index, value) => {
     const newHints = [...predefinedHints];
@@ -206,6 +215,11 @@ function AppContent() {
     await saveAsset("endingTrackThreshold", value);
   };
 
+  const handleRoomDurationChange = async (value) => {
+    updateRoomDuration(value);
+    await saveAsset("roomDuration", value);
+  };
+
   // Callback for TimerDisplay - start music when timer starts
   const handleTimerStart = () => {
     if (backgroundTracks.length > 0 && !activeTrackKey) {
@@ -213,25 +227,75 @@ function AppContent() {
     }
   };
 
-  // Callback for TimerDisplay - stop music when timer resets
-  const handleTimerReset = () => {
+  // Show end session modal
+  const handleEndSession = () => {
+    setShowEndSessionModal(true);
+  };
+
+  // Handle session end with result
+  const handleSessionEnd = async (result) => {
+    try {
+      await saveSession({
+        result,
+        roomDuration,
+        timeRemaining: seconds,
+        hintsGiven: hintsGivenCount,
+      });
+      showToast(result === 'victory' ? 'Victoire enregistrée !' : 'Défaite enregistrée.', 'success');
+    } catch (error) {
+      console.error('Failed to save session:', error);
+      showToast('Erreur lors de l\'enregistrement de la session.', 'error');
+    }
+    // Reset the timer and state
+    reset();
     stopTrack();
+    setHintsGivenCount(0);
+    setHint("");
+    setShowEndSessionModal(false);
+  };
+
+  // Cancel end session (don't save)
+  const handleCancelEndSession = () => {
+    reset();
+    stopTrack();
+    setHintsGivenCount(0);
+    setHint("");
+    setShowEndSessionModal(false);
   };
 
   return (
-    <div className="p-8 bg-slate-600 min-h-screen">
-      <div className="flex items-center justify-between bg-slate-400 p-4 rounded-md mb-6">
-        <h1 className="text-3xl font-bold text-center tracking-wide text-slate-50 w-full">
+    <div className="min-h-screen p-6 md:p-8" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+      {/* Header */}
+      <header className="card flex items-center justify-between p-4 mb-6 fade-in">
+        <div className="flex-1" />
+        <h1 className="text-2xl md:text-3xl font-bold tracking-wide" style={{ color: 'var(--color-text-primary)' }}>
           Escape Room Manager
         </h1>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="ml-4 p-2 hover:rotate-180  transition bg-slate-800 rounded-full"
-          title="Paramètres"
-        >
-          <img src={cogIcon} alt="Settings" className="w-6 h-6" />
-        </button>
-      </div>
+        <div className="flex-1 flex justify-end">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2.5 rounded-xl transition-all duration-200 hover:rotate-90"
+            style={{
+              backgroundColor: 'var(--color-bg-tertiary)',
+              color: 'var(--color-text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-accent-primary)';
+              e.currentTarget.style.color = 'white';
+              e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+              e.currentTarget.style.color = 'var(--color-text-secondary)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            title="Paramètres"
+            aria-label="Ouvrir les paramètres"
+          >
+            <Settings size={22} />
+          </button>
+        </div>
+      </header>
 
       {showSettings && (
         <SettingsModal
@@ -249,6 +313,17 @@ function AppContent() {
           endingThreshold={endingThreshold}
           onEndingThresholdChange={handleEndingThresholdChange}
           onEndingTrackChange={handleEndingTrackChange}
+          roomDuration={roomDuration}
+          onRoomDurationChange={handleRoomDurationChange}
+        />
+      )}
+
+      {showEndSessionModal && (
+        <EndSessionModal
+          onVictory={() => handleSessionEnd('victory')}
+          onDefeat={() => handleSessionEnd('defeat')}
+          onCancel={handleCancelEndSession}
+          onDismiss={() => setShowEndSessionModal(false)}
         />
       )}
 
@@ -260,7 +335,7 @@ function AppContent() {
 
       <TimerDisplay
         onStart={handleTimerStart}
-        onReset={handleTimerReset}
+        onEndSession={handleEndSession}
       />
 
       <BackgroundMusicPlayer
@@ -284,6 +359,7 @@ function AppContent() {
         deleteHint={deleteHint}
         hintSound={hintSound}
         defaultSound={hintSoundDefault}
+        onHintSent={() => setHintsGivenCount(prev => prev + 1)}
       />
 
       {playerWindow && containerRef.current && (

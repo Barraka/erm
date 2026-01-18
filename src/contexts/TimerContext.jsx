@@ -1,9 +1,10 @@
-import { createContext, useContext, useCallback } from "react";
+import { createContext, useContext, useCallback, useState } from "react";
 import useTimer from "../hooks/useTimer";
 
 const TimerContext = createContext(null);
 
 export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
+  const [roomDuration, setRoomDuration] = useState(initialSeconds);
   const timer = useTimer(initialSeconds);
 
   const addTime = useCallback((delta) => {
@@ -20,9 +21,18 @@ export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
 
   const reset = useCallback(() => {
     timer.setIsRunning(false);
-    timer.setSeconds(initialSeconds);
+    timer.setSeconds(roomDuration);
     timer.resetTimer();
-  }, [timer.setIsRunning, timer.setSeconds, timer.resetTimer, initialSeconds]);
+  }, [timer.setIsRunning, timer.setSeconds, timer.resetTimer, roomDuration]);
+
+  // Update room duration and reset timer to new duration
+  const updateRoomDuration = useCallback((newDuration) => {
+    setRoomDuration(newDuration);
+    // Only update current time if timer is not running
+    if (!timer.isRunning) {
+      timer.setSeconds(newDuration);
+    }
+  }, [timer.isRunning, timer.setSeconds]);
 
   const value = {
     // State
@@ -30,6 +40,7 @@ export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
     realTime: timer.realTime,
     seconds: timer.seconds,
     isRunning: timer.isRunning,
+    roomDuration,
     // Actions
     addTime,
     start,
@@ -37,6 +48,7 @@ export function TimerProvider({ children, initialSeconds = 60 * 60 }) {
     reset,
     setSeconds: timer.setSeconds,
     setIsRunning: timer.setIsRunning,
+    updateRoomDuration,
   };
 
   return (

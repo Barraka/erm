@@ -1,9 +1,8 @@
-import addIcon from '../assets/add.png';
-import minusIcon from '../assets/minus.png';
+import { Plus, Minus, Play, Pause, Square } from 'lucide-react';
 import { useTimerContext } from '../contexts/TimerContext';
 
-export default function TimerDisplay({ onStart, onReset }) {
-  const { time, realTime, addTime, start, pause, reset } = useTimerContext();
+export default function TimerDisplay({ onStart, onEndSession }) {
+  const { time, realTime, addTime, start, pause, isRunning } = useTimerContext();
   const [minutes, seconds] = time.split(":").map(Number);
 
   const handleStart = () => {
@@ -15,77 +14,135 @@ export default function TimerDisplay({ onStart, onReset }) {
     pause();
   };
 
-  const handleReset = () => {
-    reset();
-    onReset && onReset();
+  const handleEndSession = () => {
+    onEndSession && onEndSession();
   };
 
+  // Adjust button for +/- time
+  const TimeAdjustButton = ({ onClick, ariaLabel, icon: Icon }) => (
+    <button
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
+      style={{
+        backgroundColor: 'var(--color-bg-tertiary)',
+        color: 'var(--color-text-secondary)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--color-accent-primary)';
+        e.currentTarget.style.color = 'white';
+        e.currentTarget.style.transform = 'scale(1.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+        e.currentTarget.style.color = 'var(--color-text-secondary)';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      <Icon size={18} />
+    </button>
+  );
+
   return (
-    <div className="text-center my-8" role="timer" aria-label="Minuteur de la session">
-      <div className="inline-flex justify-center items-center gap-8 text-6xl font-bold tracking-widest bg-slate-400 text-slate-50 px-6 py-4 rounded-xl shadow-md mx-auto">
+    <div className="text-center my-8 slide-up" role="timer" aria-label="Minuteur de la session">
+      {/* Main Timer Display */}
+      <div
+        className={`card inline-flex justify-center items-center gap-6 md:gap-10 text-5xl md:text-7xl font-bold tracking-widest px-8 py-6 mx-auto ${isRunning ? 'glow-pulse' : ''}`}
+        style={{
+          color: 'var(--color-text-primary)',
+          borderColor: isRunning ? 'var(--color-accent-primary)' : 'var(--color-border-light)'
+        }}
+      >
         {/* Minutes block */}
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-3">
+            <TimeAdjustButton
               onClick={() => addTime(-60)}
-              aria-label="Retirer 1 minute"
-              className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
+              ariaLabel="Retirer 1 minute"
+              icon={Minus}
+            />
+            <span
+              aria-label={`${minutes} minutes`}
+              className="min-w-[80px] md:min-w-[100px] text-center tabular-nums"
             >
-              <img src={minusIcon} alt="" className="w-4 h-4" />
-            </button>
-
-            <span aria-label={`${minutes} minutes`}>{minutes.toString().padStart(2, "0")}</span>
-            <button
+              {minutes.toString().padStart(2, "0")}
+            </span>
+            <TimeAdjustButton
               onClick={() => addTime(60)}
-              aria-label="Ajouter 1 minute"
-              className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
-            >
-              <img src={addIcon} alt="" className="w-4 h-4" />
-            </button>
+              ariaLabel="Ajouter 1 minute"
+              icon={Plus}
+            />
           </div>
-          <span className="text-lg mt-1">min</span>
+          <span className="text-sm mt-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>min</span>
         </div>
 
-        <div className="text-6xl" aria-hidden="true">:</div>
+        <div className="text-5xl md:text-7xl" aria-hidden="true" style={{ color: 'var(--color-text-muted)' }}>:</div>
 
         {/* Seconds block */}
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-3">
+            <TimeAdjustButton
               onClick={() => addTime(-10)}
-              aria-label="Retirer 10 secondes"
-              className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
+              ariaLabel="Retirer 10 secondes"
+              icon={Minus}
+            />
+            <span
+              aria-label={`${seconds} secondes`}
+              className="min-w-[80px] md:min-w-[100px] text-center tabular-nums"
             >
-              <img src={minusIcon} alt="" className="w-4 h-4" />
-            </button>
-            <span aria-label={`${seconds} secondes`}>{seconds.toString().padStart(2, "0")}</span>
-            <button
+              {seconds.toString().padStart(2, "0")}
+            </span>
+            <TimeAdjustButton
               onClick={() => addTime(10)}
-              aria-label="Ajouter 10 secondes"
-              className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-sky-300 rounded-full shadow"
-            >
-              <img src={addIcon} alt="" className="w-4 h-4" />
-            </button>
+              ariaLabel="Ajouter 10 secondes"
+              icon={Plus}
+            />
           </div>
-          <span className="text-lg mt-1">sec</span>
+          <span className="text-sm mt-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>sec</span>
         </div>
       </div>
 
       {/* Secondary "real" timer */}
-      <p className="text-lg mt-2 text-slate-50" aria-label="Temps réel écoulé">
-        {realTime}
+      <p
+        className="text-base mt-3 font-medium"
+        style={{ color: 'var(--color-text-muted)' }}
+        aria-label="Temps réel écoulé"
+      >
+        Temps réel: {realTime}
       </p>
 
       {/* Control buttons */}
-      <div className="mt-6 space-x-2" role="group" aria-label="Contrôles du minuteur">
-        <button onClick={handleStart} aria-label="Démarrer le minuteur" className="bg-green-500 text-white px-5 py-2 rounded shadow hover:bg-green-600">
+      <div className="mt-6 flex justify-center gap-3" role="group" aria-label="Contrôles du minuteur">
+        <button
+          onClick={handleStart}
+          aria-label="Démarrer le minuteur"
+          className="btn btn-success px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
+        >
+          <Play size={18} />
           Start
         </button>
-        <button onClick={handlePause} aria-label="Mettre en pause le minuteur" className="bg-yellow-500 text-white px-5 py-2 rounded shadow hover:bg-yellow-600">
+        <button
+          onClick={handlePause}
+          aria-label="Mettre en pause le minuteur"
+          className="btn btn-warning px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
+        >
+          <Pause size={18} />
           Pause
         </button>
-        <button onClick={handleReset} aria-label="Réinitialiser le minuteur" className="bg-red-500 text-white px-5 py-2 rounded shadow hover:bg-red-600">
-          Reset
+        <button
+          onClick={handleEndSession}
+          disabled={!isRunning}
+          aria-label="Terminer la session"
+          className={`px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2 transition-all duration-200 ${
+            isRunning ? 'btn btn-danger' : 'opacity-50 cursor-not-allowed'
+          }`}
+          style={!isRunning ? {
+            backgroundColor: 'var(--color-bg-tertiary)',
+            color: 'var(--color-text-muted)'
+          } : undefined}
+        >
+          <Square size={18} />
+          Fin de Session
         </button>
       </div>
     </div>

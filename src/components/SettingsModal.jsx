@@ -1,76 +1,196 @@
+import { useState } from "react";
+import { X, Monitor, Volume2, Clock } from "lucide-react";
 import BackgroundImagePicker from "./settings/BackgroundImagePicker";
 import HintSoundPicker from "./settings/HintSoundPicker";
 import SoundEffectManager from "./settings/SoundEffectManager";
 import BackgroundMusicManager from "./settings/BackgroundMusicManager";
-import closeImg from "../assets/close.png";
 
 export default function SettingsModal({
   onClose,
   onBackgroundChange,
   onSoundChange,
-  onBackgroundMusicChange,     // kept for compatibility if you use it elsewhere
+  onBackgroundMusicChange,
   onSoundEffectsUpdate,
   refreshKey,
   endingThreshold,
   onEndingThresholdChange,
   onEndingTrackChange,
+  roomDuration,
+  onRoomDurationChange,
 }) {
+  // Local state for the input (in minutes)
+  const [durationInput, setDurationInput] = useState(Math.floor(roomDuration / 60));
+
+  const handleDurationChange = (e) => {
+    const value = e.target.value;
+    setDurationInput(value);
+
+    const minutes = parseInt(value, 10);
+    if (!isNaN(minutes) && minutes > 0 && minutes <= 180) {
+      onRoomDurationChange(minutes * 60);
+    }
+  };
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 text-teal-900">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[80vw] max-w-4xl h-[70vh] relative flex flex-col items-center gap-4 overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-6 right-6 text-gray-500 hover:text-gray-800 text-2xl hover:bg-teal-200 rounded-sm"
+    <div
+      className="fixed inset-0 flex items-center justify-center z-40"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="relative flex flex-col w-[85vw] max-w-4xl h-[80vh] rounded-2xl overflow-hidden fade-in"
+        style={{
+          backgroundColor: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border-light)',
+          boxShadow: 'var(--shadow-lg)'
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-4"
+          style={{
+            backgroundColor: 'var(--color-bg-secondary)',
+            borderBottom: '1px solid var(--color-border-light)'
+          }}
         >
-          <img
-            src={closeImg}
-            alt="closeImg"
-            title="closeImg"
-            className="w-6 h-6 cursor-pointer hover:bg-sky-400 bg-sky-100 rounded-sm"
-            />
-        </button>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Configuration
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: 'var(--color-bg-tertiary)',
+              color: 'var(--color-text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-danger)';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+              e.currentTarget.style.color = 'var(--color-text-secondary)';
+            }}
+            aria-label="Fermer"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-        <h2 className="text-xl font-bold mb-4">Configuration</h2>
-
-        {/* --- Ecran Télé (TV-related) --- */}
-        <section className="w-full border border-slate-200 rounded-lg p-4 bg-slate-50">
-          <h3 className="text-lg font-semibold text-slate-800 mb-3 text-center">Ecran Télé</h3>
-
-          <div className="flex flex-col gap-2">
-            <div className="rounded-md p-3 shadow-sm">
-              <BackgroundImagePicker onChange={onBackgroundChange} />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* --- Session settings --- */}
+          <section
+            className="rounded-xl p-5"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border-light)'
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              >
+                <Clock size={20} style={{ color: 'var(--color-success)' }} />
+              </div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                Session
+              </h3>
             </div>
-            <div className="rounded-md p-3 shadow-sm">
+
+            <div className="flex items-center gap-4">
+              <label
+                htmlFor="roomDuration"
+                className="text-sm font-medium"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Durée de la salle
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="roomDuration"
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={durationInput}
+                  onChange={handleDurationChange}
+                  className="input w-20 text-center"
+                />
+                <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  minutes
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* --- Ecran Télé (TV-related) --- */}
+          <section
+            className="rounded-xl p-5"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border-light)'
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              >
+                <Monitor size={20} style={{ color: 'var(--color-accent-primary)' }} />
+              </div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                Ecran Télé
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <BackgroundImagePicker onChange={onBackgroundChange} />
               <HintSoundPicker onChange={onSoundChange} />
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* --- Musique d'ambiance & Effets Sonores (now self-contained) --- */}
-        <section className="w-full border border-slate-200 rounded-lg p-4 bg-slate-50">
-          <h3 className="text-lg font-semibold text-slate-800 mb-3 text-center">Sons</h3>
-
-          <div className="flex flex-col gap-2">
-            <div className="rounded-md p-3 shadow-sm">
-              <BackgroundMusicManager onChange={onSoundEffectsUpdate} refreshKey={refreshKey} />
+          {/* --- Musique d'ambiance & Effets Sonores --- */}
+          <section
+            className="rounded-xl p-5"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border-light)'
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              >
+                <Volume2 size={20} style={{ color: 'var(--color-warning)' }} />
+              </div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                Sons
+              </h3>
             </div>
-            <div className="rounded-md p-3 shadow-sm">
+
+            <div className="flex flex-col gap-4">
+              <BackgroundMusicManager onChange={onSoundEffectsUpdate} refreshKey={refreshKey} />
               <SoundEffectManager onChange={onSoundEffectsUpdate} />
             </div>
-          </div>
+          </section>
+        </div>
 
-        
-        
-
-        </section>
-        
-
-        <button
-          onClick={onClose}
-          className="inline-block px-4 py-2 bg-sky-400 text-white font-semibold rounded hover:bg-sky-600 transition"
+        {/* Footer */}
+        <div
+          className="px-6 py-4 flex justify-end"
+          style={{
+            backgroundColor: 'var(--color-bg-secondary)',
+            borderTop: '1px solid var(--color-border-light)'
+          }}
         >
-          Fermer
-        </button>
+          <button
+            onClick={onClose}
+            className="btn btn-primary px-6 py-2.5 text-base font-semibold rounded-xl"
+          >
+            Fermer
+          </button>
+        </div>
       </div>
     </div>
   );

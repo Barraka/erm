@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
+import { Lightbulb, Send, Eraser, ChevronRight } from "lucide-react";
 import HintList from "./HintList";
 import { useToast } from "./ToastProvider";
-import arrowImg from "../assets/arrow.png";
 
 export default function ManageHints({
   inputValue,
@@ -10,9 +10,10 @@ export default function ManageHints({
   setHint,
   predefinedHints,
   updateHints,
-  deleteHint,          // ✅ added
+  deleteHint,
   hintSound,
-  defaultSound
+  defaultSound,
+  onHintSent
 }) {
   const { showToast } = useToast?.() ?? { showToast: () => {} };
   const [open, setOpen] = useState(false);
@@ -26,7 +27,7 @@ export default function ManageHints({
     }
     setHint(text);
     showToast("Indice envoyé !");
-    // Optional: play a sound if you wire one here
+    onHintSent && onHintSent();
     try {
       const url = hintSound || defaultSound;
       if (url) {
@@ -44,58 +45,67 @@ export default function ManageHints({
 
   const handleHintSelect = (text) => {
     setInputValue(text);
-    // focus the input for quick edits
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
   return (
-    <div className="w-full rounded-xl bg-slate-200 p-4 ring-1 ring-white/10 backdrop-blur mt-6">
+    <div className="card w-full p-4 mt-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-semibold bg-slate-200 text-teal-800 text-xl hover:outline-teal-500">
-          Indices
-        </h2>
+      <div
+        className="flex items-center justify-between gap-3 cursor-pointer rounded-lg p-2 -m-2 transition-all duration-200 hover:bg-[var(--color-bg-tertiary)]"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="p-2 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          >
+            <Lightbulb size={20} style={{ color: 'var(--color-warning)' }} />
+          </div>
+          <h2 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>
+            Indices
+          </h2>
+        </div>
 
-        {/* Toggle collapse */}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-slate-400 text-white outline outline-2 outline-transparent hover:outline-cyan-400"
+        {/* Toggle indicator */}
+        <div
+          className="p-2 rounded-lg transition-all duration-200"
+          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
         >
-          <img
-            src={arrowImg}
-            alt=""
-            className={[
-              "h-4 w-4 transition-transform",
-              open ? "rotate-90" : ""
-            ].join(" ")}
+          <ChevronRight
+            size={20}
+            className={`transition-transform duration-300 ${open ? "rotate-90" : "rotate-0"}`}
+            style={{ color: 'var(--color-text-secondary)' }}
           />
-          {open ? "Masquer la liste" : "Afficher la liste"}
-        </button>
+        </div>
       </div>
 
       {/* Composer */}
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto] text-white ">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto]">
         <input
           ref={inputRef}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Écrire un indice…"
-          className="min-w-0 rounded-lg border border-white/10 placeholder-white text-lg bg-slate-500 px-3 py-2  placeholder-white/50 outline-none focus:ring-2 focus:ring-teal-400/60"
+          className="input min-w-0 text-base px-4 py-2.5"
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
 
         <button
           onClick={handleSend}
-          className="rounded-lg bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
+          className="btn btn-success px-4 py-2.5 text-base font-semibold rounded-lg flex items-center gap-2"
         >
+          <Send size={16} />
           Envoyer Indice
         </button>
 
         <button
           onClick={handleClear}
-          className="rounded-lg bg-slate-300 px-4 py-2 text-black transition hover:bg-slate-400"
+          className="btn btn-ghost px-4 py-2.5 text-base font-semibold rounded-lg flex items-center gap-2"
+          style={{ border: '1px solid var(--color-border)' }}
         >
+          <Eraser size={16} />
           Effacer Indice
         </button>
       </div>
@@ -103,29 +113,24 @@ export default function ManageHints({
       {/* Collapsible Hint List (animated) */}
       <div
         className={[
-          "mt-4 overflow-hidden rounded-lg ring-1 ring-white/10",
+          "mt-4 overflow-hidden rounded-xl",
           "transition-[max-height] duration-300 ease-in-out",
           open ? "max-h-96" : "max-h-0"
         ].join(" ")}
+        style={{ border: open ? `1px solid var(--color-border-light)` : 'none' }}
       >
-        {/* Keep the scroll INSIDE the collapsing box */}
-        <div className="max-h-96 overflow-y-auto bg-slate-700/40 p-2">
+        <div
+          className="max-h-96 overflow-y-auto p-3"
+          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+        >
           <HintList
             hints={predefinedHints}
             onUpdate={updateHints}
             onSelect={handleHintSelect}
-            onDelete={deleteHint}  
+            onDelete={deleteHint}
           />
         </div>
       </div>
-
-      {/* Current hint preview (optional) */}
-      {/* {hint ? (
-        <div className="mt-4 rounded-lg bg-emerald-500/15 px-3 py-2 text-emerald-200 ring-1 ring-emerald-400/20">
-          <span className="text-sm font-medium">Indice actif : </span>
-          <span className="text-sm">{hint}</span>
-        </div>
-      ) : null} */}
     </div>
   );
 }

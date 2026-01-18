@@ -164,3 +164,52 @@ export async function getEndEffect(role) {
   const blob = await get(entry.key);
   return { ...entry, blob }; // { key, name, type, role, blob }
 }
+
+// 🟢 SESSION HISTORY
+const SESSIONS_KEY = 'session-history';
+
+/**
+ * Save a completed session
+ * @param {Object} session - Session data
+ * @param {string} session.result - 'victory' or 'defeat'
+ * @param {number} session.roomDuration - Configured room duration in seconds
+ * @param {number} session.timeRemaining - Time remaining when session ended (seconds)
+ * @param {number} session.hintsGiven - Number of hints sent during session
+ * @param {Date} session.date - Session end date/time
+ */
+export async function saveSession(session) {
+  const sessions = (await get(SESSIONS_KEY)) || [];
+  const newSession = {
+    id: `session-${Date.now()}`,
+    date: new Date().toISOString(),
+    ...session,
+  };
+  sessions.push(newSession);
+  await set(SESSIONS_KEY, sessions);
+  return newSession;
+}
+
+/**
+ * Get all saved sessions
+ * @returns {Promise<Array>} Array of session objects
+ */
+export async function getAllSessions() {
+  return (await get(SESSIONS_KEY)) || [];
+}
+
+/**
+ * Delete a session by ID
+ * @param {string} sessionId - Session ID to delete
+ */
+export async function deleteSession(sessionId) {
+  const sessions = (await get(SESSIONS_KEY)) || [];
+  const filtered = sessions.filter(s => s.id !== sessionId);
+  await set(SESSIONS_KEY, filtered);
+}
+
+/**
+ * Clear all session history
+ */
+export async function clearAllSessions() {
+  await set(SESSIONS_KEY, []);
+}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronRight, Pencil, Trash2, Check, X, Plus, Sparkles, Trophy, Skull } from "lucide-react";
 import {
   getAllSoundEffects,
   deleteSoundEffect,
@@ -6,12 +7,6 @@ import {
   setEndRoleByName,
   filterSoundEffects,
 } from "../../utils/soundEffectsDB";
-import arrowImg from "../../assets/arrow.png";
-import editImg from "../../assets/edit.png";
-import delImg from "../../assets/delete.png";
-import checkImg from "../../assets/check.png";
-import lossImg from "../../assets/loss.png";
-import winImg from "../../assets/win.png";
 import SoundEffectPicker from "./SoundEffectPicker";
 
 
@@ -27,8 +22,45 @@ export default function SoundEffectManager({ onChange }) {
   const [pendingRole, setPendingRole] = useState("none");
   const [preAddNames, setPreAddNames] = useState([]);
 
+  // Track previous blob URLs to properly revoke them when effects change
+  const prevUrlsRef = useRef(new Map());
+
   useEffect(() => {
     loadEffects();
+  }, []);
+
+  // Memoize blob URLs to prevent re-creation on every render
+  const effectUrls = useMemo(() => {
+    const newUrls = new Map();
+    effects.forEach((e) => {
+      if (e.blob instanceof Blob) {
+        // Reuse existing URL if the blob is the same (by name as key)
+        const existingUrl = prevUrlsRef.current.get(e.name);
+        if (existingUrl) {
+          newUrls.set(e.name, existingUrl);
+        } else {
+          newUrls.set(e.name, URL.createObjectURL(e.blob));
+        }
+      }
+    });
+
+    // Revoke old URLs that are no longer in use
+    prevUrlsRef.current.forEach((url, name) => {
+      if (!newUrls.has(name)) {
+        URL.revokeObjectURL(url);
+      }
+    });
+    prevUrlsRef.current = newUrls;
+
+    return newUrls;
+  }, [effects]);
+
+  // Cleanup all URLs on unmount
+  useEffect(() => {
+    return () => {
+      prevUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      prevUrlsRef.current.clear();
+    };
   }, []);
 
   const loadEffects = async () => {
@@ -85,62 +117,104 @@ export default function SoundEffectManager({ onChange }) {
     setPreAddNames([]);
   };
 
+  const IconButton = ({ onClick, icon: Icon, variant = "default", title, disabled = false }) => {
+    const colors = {
+      default: { bg: 'var(--color-bg-elevated)', hover: 'var(--color-accent-primary)', color: 'var(--color-text-secondary)' },
+      success: { bg: 'var(--color-success)', hover: 'var(--color-success-hover)', color: 'white' },
+      danger: { bg: 'var(--color-danger)', hover: 'var(--color-danger-hover)', color: 'white' },
+    };
+    const c = colors[variant];
+
+    return (
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+        className="p-1.5 rounded-lg transition-all duration-150"
+        style={{ backgroundColor: c.bg, color: c.color, opacity: disabled ? 0.5 : 1 }}
+        onMouseEnter={(e) => {
+          if (!disabled) {
+            e.currentTarget.style.backgroundColor = c.hover;
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = c.bg;
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        <Icon size={16} />
+      </button>
+    );
+  };
+
   const roleBadge = (role) =>
     role === "victory" ? (
-      <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700">
-        <img
-          src={winImg}
-          alt="winImg"
-          title="winImg"
-          className="w-6 h-6  rounded-sm"
-          />
+      <span
+        className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-md font-medium"
+        style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: 'var(--color-success)' }}
+      >
+        <Trophy size={12} />
       </span>
     ) : role === "defeat" ? (
-      <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-rose-100 text-rose-700">
-        <img
-          src={lossImg}
-          alt="lossImg"
-          title="lossImg"
-          className="w-6 h-6 rounded-sm "
-          />
+      <span
+        className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-md font-medium"
+        style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)' }}
+      >
+        <Skull size={12} />
       </span>
     ) : null;
 
   return (
-    <div className="bg-sky-100 p-4 rounded-md w-full hover:outline hover:outline-2 hover:outline-sky-500 transition-[outline] ease-in-out">
+    <div
+      className="p-4 rounded-xl w-full transition-all duration-200"
+      style={{
+        backgroundColor: 'var(--color-bg-tertiary)',
+        border: '1px solid var(--color-border-light)'
+      }}
+    >
+      {/* Header */}
       <div
-        className="flex justify-between items-center cursor-pointer"
+        className="flex justify-between items-center cursor-pointer rounded-lg p-2 -m-2 transition-all duration-200 hover:bg-[var(--color-bg-elevated)]"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="font-semibold mb-2">Effets Sonores Actuels</h3>
-        <img
-          src={arrowImg}
-          alt="toggle"
-          className={`w-8 h-8 transition-transform duration-300 bg-slate-400 rounded-full m-2 ${
-            isExpanded ? "rotate-90" : "rotate-0"
-          }`}
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} style={{ color: 'var(--color-warning)' }} />
+          <h3 className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            Effets Sonores
+          </h3>
+        </div>
+        <ChevronRight
+          size={20}
+          className={`transition-transform duration-300 ${isExpanded ? "rotate-90" : "rotate-0"}`}
+          style={{ color: 'var(--color-text-muted)' }}
         />
       </div>
 
       {isExpanded && (
-        <>
+        <div className="mt-4 space-y-3 fade-in">
           {effects.length === 0 ? (
-            <p className="text-gray-600 italic">Aucun effet sonore enregistré.</p>
+            <p className="text-sm italic" style={{ color: 'var(--color-text-muted)' }}>
+              Aucun effet sonore enregistré.
+            </p>
           ) : (
-            <ul className="space-y-2 mt-2">
-              {effects.map(({ name, blob, role }) => (
+            <ul className="space-y-2">
+              {effects.map(({ name, role }) => (
                 <li
                   key={name}
-                  className="grid items-center bg-white p-2 rounded shadow gap-2 [grid-template-columns:1fr_auto_auto]"
+                  className="flex items-center gap-3 p-3 rounded-lg"
+                  style={{
+                    backgroundColor: 'var(--color-bg-secondary)',
+                    border: '1px solid var(--color-border-light)'
+                  }}
                 >
-                  {/* Col 1: Name / Rename input */}
-                  <div className="min-w-0">
+                  <div className="flex-grow min-w-0 flex items-center">
                     {editingName === name ? (
                       <input
                         type="text"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        className="border border-slate-300 rounded px-2 py-1 w-full"
+                        className="input w-full text-sm"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleConfirmRename(name);
@@ -148,71 +222,37 @@ export default function SoundEffectManager({ onChange }) {
                         }}
                       />
                     ) : (
-                      <span className="font-medium truncate inline-block max-w-[28rem]">
-                        {name}
-                      </span>
+                      <>
+                        <span
+                          className="font-medium text-sm truncate"
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
+                          {name}
+                        </span>
+                        {roleBadge(role)}
+                      </>
                     )}
-                    {roleBadge(role)}
                   </div>
 
-                  {/* Col 2: Edit / Confirm button */}
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center gap-2">
                     {editingName === name ? (
-                      <button
-                        onClick={() => handleConfirmRename(name)}
-                        className="text-green-600 hover:text-green-800 text-xl"
-                        title="Confirmer"
-                      >
-                        <img
-                            src={checkImg}
-                            alt="Check"
-                            title="Check"
-                            // onClick={() => setConfirmingDelete(name)}
-                            className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                            />
-                      </button>
+                      <>
+                        <IconButton onClick={() => handleConfirmRename(name)} icon={Check} variant="success" title="Confirmer" />
+                        <IconButton onClick={() => setEditingName(null)} icon={X} variant="default" title="Annuler" />
+                      </>
                     ) : (
-                      <img
-                        src={editImg}
-                        alt="Modifier"
-                        title="Renommer"
-                        onClick={() => handleRename(name)}
-                        className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                      />
+                      <IconButton onClick={() => handleRename(name)} icon={Pencil} variant="default" title="Renommer" />
                     )}
-                  </div>
 
-                  {/* Col 3: Controls */}
-                  <div className="flex items-center justify-end gap-2">
-                    <audio controls src={URL.createObjectURL(blob)} className="h-8" />
+                    <audio controls src={effectUrls.get(name)} className="h-8 rounded" />
+
                     {confirmingDelete === name ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDelete(name)}
-                          className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-700"
-                        >
-                          Confirmer
-                        </button>
-                        <button
-                          onClick={() => setConfirmingDelete(null)}
-                          className="px-2 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
-                        >
-                          Annuler
-                        </button>
-                      </div>
+                      <>
+                        <IconButton onClick={() => handleDelete(name)} icon={Check} variant="danger" title="Confirmer" />
+                        <IconButton onClick={() => setConfirmingDelete(null)} icon={X} variant="default" title="Annuler" />
+                      </>
                     ) : (
-                      <button
-                        onClick={() => setConfirmingDelete(name)}
-                        className="text-red-500 hover:text-red-700 font-bold text-lg"
-                        title="Supprimer"
-                      >
-                        <img
-                          src={delImg}
-                          alt="Delete"
-                          title="Delete"
-                          className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                          />
-                      </button>
+                      <IconButton onClick={() => setConfirmingDelete(name)} icon={Trash2} variant="default" title="Supprimer" />
                     )}
                   </div>
                 </li>
@@ -220,68 +260,82 @@ export default function SoundEffectManager({ onChange }) {
             </ul>
           )}
 
-          {/* Bottom: Add new SFX */}
-          <div className="mt-4 space-y-2">
+          <div className="pt-2">
             {!showPicker ? (
               <button
                 onClick={openPicker}
-                className="px-3 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: 'var(--color-success)',
+                  color: 'white'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-success-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-success)';
+                }}
               >
-                + Ajouter un effet
+                <Plus size={16} />
+                Ajouter un effet
               </button>
             ) : (
-              <div className="mt-2 rounded border border-slate-300 bg-white p-3">
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  border: '1px solid var(--color-border-light)'
+                }}
+              >
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="text-sm text-slate-700">Rôle (optionnel):</span>
+                  <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Rôle:</span>
                   <button
                     onClick={() => setPendingRole("none")}
-                    className={`px-2 py-1 text-xs rounded border ${
-                      pendingRole === "none" ? "bg-slate-200" : "bg-white"
-                    }`}
+                    className="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
+                    style={{
+                      backgroundColor: pendingRole === "none" ? 'var(--color-accent-primary)' : 'var(--color-bg-tertiary)',
+                      color: pendingRole === "none" ? 'white' : 'var(--color-text-secondary)',
+                      border: '1px solid var(--color-border-light)'
+                    }}
                   >
                     Aucun
                   </button>
                   <button
                     onClick={() => setPendingRole("victory")}
-                    className={`px-2 py-1 text-xs rounded border ${
-                      pendingRole === "victory"
-                        ? "bg-emerald-100 border-emerald-400"
-                        : "bg-white"
-                    }`}
+                    className="px-3 py-1.5 text-xs rounded-lg flex items-center gap-1 transition-all duration-150"
+                    style={{
+                      backgroundColor: pendingRole === "victory" ? 'rgba(34, 197, 94, 0.3)' : 'var(--color-bg-tertiary)',
+                      color: pendingRole === "victory" ? 'var(--color-success)' : 'var(--color-text-secondary)',
+                      border: `1px solid ${pendingRole === "victory" ? 'var(--color-success)' : 'var(--color-border-light)'}`
+                    }}
                   >
-                    <img
-                      src={winImg}
-                      alt="winImg"
-                      title="winImg"
-                      className="w-6 h-6 rounded-sm  "
-                      />
+                    <Trophy size={14} />
+                    Victoire
                   </button>
                   <button
                     onClick={() => setPendingRole("defeat")}
-                    className={`px-2 py-1 text-xs rounded border ${
-                      pendingRole === "defeat"
-                        ? "bg-rose-100 border-rose-400"
-                        : "bg-white"
-                    }`}
+                    className="px-3 py-1.5 text-xs rounded-lg flex items-center gap-1 transition-all duration-150"
+                    style={{
+                      backgroundColor: pendingRole === "defeat" ? 'rgba(239, 68, 68, 0.3)' : 'var(--color-bg-tertiary)',
+                      color: pendingRole === "defeat" ? 'var(--color-danger)' : 'var(--color-text-secondary)',
+                      border: `1px solid ${pendingRole === "defeat" ? 'var(--color-danger)' : 'var(--color-border-light)'}`
+                    }}
                   >
-                    <img
-                      src={lossImg}
-                      alt="lossImg"
-                      title="lossImg"
-                      className="w-6 h-6 rounded-sm "
-                      />
+                    <Skull size={14} />
+                    Défaite
                   </button>
                 </div>
 
                 <SoundEffectPicker onAdded={handleAdded} />
 
-                <div className="mt-2">
+                <div className="mt-3">
                   <button
                     onClick={() => {
                       setShowPicker(false);
                       setPendingRole("none");
                     }}
-                    className="px-3 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                    className="btn btn-ghost px-4 py-2 text-sm rounded-lg"
+                    style={{ border: '1px solid var(--color-border)' }}
                   >
                     Annuler
                   </button>
@@ -289,7 +343,7 @@ export default function SoundEffectManager({ onChange }) {
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

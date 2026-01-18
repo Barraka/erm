@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import arrowImg from "../assets/arrow.png";
+import { ChevronRight, Sparkles, Volume2, Trophy, Skull } from "lucide-react";
 import Controls from "./Controls";
 
 export default function SoundEffectPlayer({
@@ -242,50 +242,66 @@ export default function SoundEffectPlayer({
     });
   };
 
-  // 🟢 role badge renderer (same as in SoundEffectManager)
+  // Role badge renderer with Lucide icons
   const roleBadge = (role) =>
     role === "victory" ? (
-      <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700">
-        🏆
+      <span
+        className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-md font-medium"
+        style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: 'var(--color-success)' }}
+      >
+        <Trophy size={12} />
+        Victoire
       </span>
     ) : role === "defeat" ? (
-      <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-rose-100 text-rose-700">
-        💀
+      <span
+        className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-md font-medium"
+        style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)' }}
+      >
+        <Skull size={12} />
+        Défaite
       </span>
     ) : null;
 
-  const headerName = (() => {
-    const k = activeEffectKey || effects[0]?.key;
-    const found = effects.find?.((e) => e?.key === k);
-    return found?.name ?? "Aucun effet";
-  })();
-
   return (
-    <div className={`mt-6 w-full bg-slate-200 text-teal-800 text-xl hover:outline-teal-500 p-4 rounded-md hover:outline  hover:outline-4 ease-in transition-all`}>
+    <div className="card mt-6 w-full p-4 transition-all duration-200">
       {/* Header */}
       <div
-        className="flex items-center justify-between cursor-pointer"
+        className="flex items-center justify-between cursor-pointer rounded-lg p-2 -m-2 transition-all duration-200 hover:bg-[var(--color-bg-tertiary)]"
         onClick={() => setIsExpanded((v) => !v)}
       >
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold ">Effets Sonores</h3>
-
+          <div
+            className="p-2 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          >
+            <Sparkles size={20} style={{ color: 'var(--color-warning)' }} />
+          </div>
+          <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>
+            Effets Sonores
+          </h3>
         </div>
-        <img
-          src={arrowImg}
-          alt="toggle"
-          className={`w-8 h-8 transition-transform duration-300 bg-slate-400 rounded-full m-2 ${
-            isExpanded ? "rotate-90" : "rotate-0"
-          }`}
-        />
+        <div
+          className="p-2 rounded-lg transition-all duration-200"
+          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+        >
+          <ChevronRight
+            size={20}
+            className={`transition-transform duration-300 ${isExpanded ? "rotate-90" : "rotate-0"}`}
+            style={{ color: 'var(--color-text-secondary)' }}
+          />
+        </div>
       </div>
 
       {/* Expanded list */}
       {isExpanded && (
-        <div className="mt-4 w-full space-y-4">
+        <div className="mt-4 w-full space-y-3 fade-in">
           {/* Global volume control for all effects */}
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-300">
-            <span className="text-sm text-gray-600 min-w-16">Volume</span>
+          <div
+            className="flex items-center gap-3 p-3 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)', borderBottom: `1px solid var(--color-border-light)` }}
+          >
+            <Volume2 size={16} style={{ color: 'var(--color-text-muted)' }} />
+            <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Volume global</span>
             <input
               type="range"
               min={0}
@@ -293,13 +309,15 @@ export default function SoundEffectPlayer({
               step={0.05}
               value={volume}
               onChange={(e) => handleVolumeChange(e.target.value)}
-              className="w-32"
+              className="w-32 volume-slider"
             />
-            <span className="text-sm text-gray-600 w-12">{Math.round(volume * 100)}%</span>
+            <span className="text-sm w-12" style={{ color: 'var(--color-text-muted)' }}>{Math.round(volume * 100)}%</span>
           </div>
 
           {effects.length === 0 && (
-            <div className="text-sm text-gray-600">Aucun effet ajouté.</div>
+            <div className="text-sm p-4 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-muted)' }}>
+              Aucun effet ajouté.
+            </div>
           )}
 
           {effects.map?.(({ key, name, role }) => {
@@ -309,38 +327,40 @@ export default function SoundEffectPlayer({
             return (
               <div
                 key={key}
-                className={`w-full rounded-lg p-3 border ${
-                  st.isPlaying ? "border-indigo-500 bg-white" : "border-slate-300 bg-slate-50"
-                }`}
+                className="w-full rounded-xl p-4 transition-all duration-200"
+                style={{
+                  backgroundColor: st.isPlaying ? 'var(--color-bg-tertiary)' : 'var(--color-bg-secondary)',
+                  border: `1px solid ${st.isPlaying ? 'var(--color-accent-primary)' : 'var(--color-border-light)'}`,
+                  boxShadow: st.isPlaying ? 'var(--shadow-glow)' : 'none'
+                }}
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="font-medium min-w-40 flex items-center gap-1">
+                  <div className="font-medium min-w-40 flex items-center gap-1" style={{ color: 'var(--color-text-primary)' }}>
                     {name}
-                    {roleBadge(role)} {/* ✅ badge next to name */}
+                    {roleBadge(role)}
                   </div>
 
-                  {/* Controls */}
                   <Controls
                     onPlay={() => handlePlayKey(key)}
                     onPause={() => handlePauseKey(key)}
                     onStop={() => handleStopKey(key)}
                   />
 
-                  <div className="ml-auto text-sm text-gray-700">
+                  <div className="ml-auto text-sm tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
                     {canControl && st.duration > 0 ? (
                       <>
                         {formatTime(st.progress)} / {formatTime(st.duration)}
-                        <span className="ml-2 text-gray-500">
+                        <span className="ml-2" style={{ color: 'var(--color-text-muted)' }}>
                           (-{formatTime((st.duration || 0) - (st.progress || 0))})
                         </span>
                       </>
                     ) : (
-                      <>--:-- / --:--</>
+                      <span style={{ color: 'var(--color-text-muted)' }}>--:-- / --:--</span>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center gap-3">
+                <div className="mt-3 flex items-center gap-3">
                   <input
                     type="range"
                     min={0}
@@ -349,7 +369,7 @@ export default function SoundEffectPlayer({
                     value={canControl ? Math.min(st.progress, st.duration || 0) : 0}
                     onChange={(e) => canControl && handleSeekActive(key, e.target.value)}
                     disabled={!canControl || Number.isNaN(st.duration)}
-                    className="w-full"
+                    className="w-full volume-slider"
                   />
                 </div>
               </div>

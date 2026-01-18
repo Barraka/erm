@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import arrowImg from "../assets/arrow.png";
+import { ChevronRight, Music, Volume2 } from "lucide-react";
 import Controls from "./Controls";
 
 export default function BackgroundMusicPlayer({
@@ -89,23 +89,35 @@ export default function BackgroundMusicPlayer({
     if (!item) return;
 
     let a = currentAudioRef.current;
+
+    // If audio exists and we're resuming the same track, just play (don't change src)
+    const currentKey = activeKey || activeTrackKey;
+    if (a && a.src && key === currentKey) {
+      try {
+        await a.play();
+        setIsPlaying(true);
+      } catch (e) {
+        console.warn("Play failed:", e);
+      }
+      return;
+    }
+
+    // Different track or no audio - create/update the audio element
     if (!a) {
       a = new Audio();
       currentAudioRef.current = a;
     }
 
-    if (!a.src || a.src !== item._url) {
-      a.src = item._url;
-      a.loop = true;
-      a.volume = volume;
-      a.addEventListener("loadedmetadata", () => {
-        setDuration(Number.isNaN(a.duration) ? 0 : a.duration);
-      }, { once: true });
-    }
+    a.src = item._url;
+    a.loop = true;
+    a.volume = volume;
+    a.addEventListener("loadedmetadata", () => {
+      setDuration(Number.isNaN(a.duration) ? 0 : a.duration);
+    }, { once: true });
 
     try {
       await a.play();
-      setActiveKey(key);         // local state (App will continue using shared ref)
+      setActiveKey(key);
       setIsPlaying(true);
     } catch (e) {
       console.warn("Play failed:", e);
@@ -152,44 +164,55 @@ export default function BackgroundMusicPlayer({
     : (tracks[0]?.name ?? "Aucune piste");
 
   return (
-    <div
-      className={`mt-6 w-full ${isExpanded ? "" : "inline-block"} bg-slate-200 text-teal-800 text-xl hover:outline-teal-500 p-4 rounded-md hover:outline hover:outline-4 ease-in transition-all`}
-    >
+    <div className="card mt-6 w-full p-4 transition-all duration-200">
       {/* Header */}
       <div
-        className="flex items-center justify-between cursor-pointer"
+        className="flex items-center justify-between cursor-pointer rounded-lg p-2 -m-2 transition-all duration-200 hover:bg-[var(--color-bg-tertiary)]"
         onClick={() => setIsExpanded((v) => !v)}
       >
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold ">Musique d'Ambiance</h3>
+          <div
+            className="p-2 rounded-lg"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          >
+            <Music size={20} style={{ color: 'var(--color-accent-primary)' }} />
+          </div>
+          <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text-primary)' }}>
+            Musique d'Ambiance
+          </h3>
           {!isExpanded && (
-  <div className="flex items-center gap-2 text-sm ">
-    <span
-      className={`inline-block w-3 h-3 rounded-full ${
-        isPlaying ? "bg-green-500" : "bg-gray-400"
-      }`}
-      title={isPlaying ? "Lecture en cours" : "En pause / arrêtée"}
-    ></span>
-    <span>
-      {currentName}
-      {duration ? ` • ${formatTime(progress)} / ${formatTime(duration)}` : ""}
-    </span>
-  </div>
-)}
-
+            <div className="flex items-center gap-2 text-sm ml-2" style={{ color: 'var(--color-text-secondary)' }}>
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: isPlaying ? 'var(--color-success)' : 'var(--color-text-muted)' }}
+                title={isPlaying ? "Lecture en cours" : "En pause / arrêtée"}
+              />
+              <span>
+                {currentName}
+                {duration ? ` • ${formatTime(progress)} / ${formatTime(duration)}` : ""}
+              </span>
+            </div>
+          )}
         </div>
-        <img
-          src={arrowImg}
-          alt="toggle"
-          className={`w-8 h-8 transition-transform duration-300 bg-slate-400 rounded-full m-2 ${isExpanded ? "rotate-90" : "rotate-0"}`}
-        />
+        <div
+          className="p-2 rounded-lg transition-all duration-200"
+          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+        >
+          <ChevronRight
+            size={20}
+            className={`transition-transform duration-300 ${isExpanded ? "rotate-90" : "rotate-0"}`}
+            style={{ color: 'var(--color-text-secondary)' }}
+          />
+        </div>
       </div>
 
       {/* Expanded list of per-track players */}
       {isExpanded && (
-        <div className="mt-4 w-full space-y-4">
+        <div className="mt-4 w-full space-y-3 fade-in">
           {tracks.length === 0 && (
-            <div className="text-sm text-gray-600">Aucune piste ajoutée pour cette salle.</div>
+            <div className="text-sm p-4 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-muted)' }}>
+              Aucune piste ajoutée pour cette salle.
+            </div>
           )}
 
           {tracks.map(({ key, name }) => {
@@ -197,13 +220,18 @@ export default function BackgroundMusicPlayer({
             return (
               <div
                 key={key}
-                className={`w-full rounded-lg p-3 border ${isActive ? "border-indigo-500 bg-white" : "border-slate-300 bg-slate-50"}`}
+                className="w-full rounded-xl p-4 transition-all duration-200"
+                style={{
+                  backgroundColor: isActive ? 'var(--color-bg-tertiary)' : 'var(--color-bg-secondary)',
+                  border: `1px solid ${isActive ? 'var(--color-accent-primary)' : 'var(--color-border-light)'}`,
+                  boxShadow: isActive ? 'var(--shadow-glow)' : 'none'
+                }}
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="font-medium min-w-40">{name}</div>
+                  <div className="font-medium min-w-40" style={{ color: 'var(--color-text-primary)' }}>
+                    {name}
+                  </div>
 
-                  {/* Controls */}
-                  
                   <Controls
                     onPlay={() => handlePlayKey(key)}
                     onPause={() => handlePauseKey(key)}
@@ -212,22 +240,21 @@ export default function BackgroundMusicPlayer({
                     canStop={isActive && !!currentAudioRef.current}
                   />
 
-
-                  <div className="ml-auto text-sm text-gray-700">
+                  <div className="ml-auto text-sm tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
                     {isActive ? (
                       <>
                         {formatTime(progress)} / {formatTime(duration)}
-                        <span className="ml-2 text-gray-500">
+                        <span className="ml-2" style={{ color: 'var(--color-text-muted)' }}>
                           (-{formatTime((duration || 0) - (progress || 0))})
                         </span>
                       </>
                     ) : (
-                      <>--:-- / --:--</>
+                      <span style={{ color: 'var(--color-text-muted)' }}>--:-- / --:--</span>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center gap-3">
+                <div className="mt-3 flex items-center gap-3">
                   <input
                     type="range"
                     min={0}
@@ -236,14 +263,14 @@ export default function BackgroundMusicPlayer({
                     value={isActive ? Math.min(progress, duration || 0) : 0}
                     onChange={(e) => isActive && handleSeekActive(e.target.value)}
                     disabled={!isActive || Number.isNaN(duration)}
-                    className="w-full"
+                    className="w-full volume-slider"
                   />
                 </div>
 
                 {/* Volume control */}
                 {isActive && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-sm text-gray-600 min-w-16">Volume</span>
+                  <div className="mt-3 flex items-center gap-3">
+                    <Volume2 size={16} style={{ color: 'var(--color-text-muted)' }} />
                     <input
                       type="range"
                       min={0}
@@ -251,9 +278,11 @@ export default function BackgroundMusicPlayer({
                       step={0.05}
                       value={volume}
                       onChange={(e) => handleVolumeChange(e.target.value)}
-                      className="w-32"
+                      className="w-32 volume-slider"
                     />
-                    <span className="text-sm text-gray-600 w-12">{Math.round(volume * 100)}%</span>
+                    <span className="text-sm w-12" style={{ color: 'var(--color-text-muted)' }}>
+                      {Math.round(volume * 100)}%
+                    </span>
                   </div>
                 )}
               </div>
