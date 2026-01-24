@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { Image, X, Loader2 } from "lucide-react";
 import FilePicker from "./../FilePicker";
 import { getAsset, saveAsset } from "../../utils/soundEffectsDB";
 import { useToast } from "../ToastProvider";
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -29,7 +30,6 @@ export default function BackgroundImagePicker({ onChange }) {
       return;
     }
 
-    // Validate image file type
     if (!VALID_IMAGE_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
       showToast("Format image invalide. Utilisez JPG, PNG, GIF ou WebP.", "error");
       return;
@@ -75,26 +75,54 @@ export default function BackgroundImagePicker({ onChange }) {
   };
 
   return (
-    <div className="flex items-center gap-4 justify-between bg-sky-100 p-4 rounded-md w-full">
-      <label className="font-semibold whitespace-nowrap">Fond d'Écran:</label>
+    <div
+      className="flex items-center gap-4 p-4 rounded-xl w-full"
+      style={{
+        backgroundColor: 'var(--color-bg-tertiary)',
+        border: '1px solid var(--color-border-light)'
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <Image size={18} style={{ color: 'var(--color-text-muted)' }} />
+        <label className="font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
+          Fond d'Écran:
+        </label>
+      </div>
 
       <FilePicker
-        label={isLoading ? "Chargement..." : "Choisir un fichier"}
+        label={isLoading ? "Chargement..." : "Choisir"}
         accept="image/*"
         onFileSelected={handleFileSelected}
         disabled={isLoading}
       />
 
-      <p className="text-sm text-gray-800 flex-grow">
-        {isLoading ? "Chargement..." : (fileName || "Aucun fichier sélectionné")}
+      <p
+        className="text-sm flex-grow truncate"
+        style={{ color: fileName ? 'var(--color-text-secondary)' : 'var(--color-text-muted)' }}
+      >
+        {isLoading ? (
+          <span className="flex items-center gap-2">
+            <Loader2 size={14} className="animate-spin" />
+            Chargement...
+          </span>
+        ) : (
+          fileName || "Aucun fichier sélectionné"
+        )}
       </p>
 
       <button
         onClick={handleRemove}
         disabled={isLoading || !fileName}
-        className="px-4 py-2 bg-stone-400 text-white font-semibold rounded hover:bg-stone-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+        className="p-2 rounded-lg transition-all duration-200 flex items-center gap-1"
+        style={{
+          backgroundColor: fileName ? 'var(--color-danger)' : 'var(--color-bg-elevated)',
+          color: 'white',
+          opacity: isLoading || !fileName ? 0.5 : 1,
+          cursor: isLoading || !fileName ? 'not-allowed' : 'pointer'
+        }}
+        title="Retirer"
       >
-        Retirer
+        <X size={16} />
       </button>
     </div>
   );

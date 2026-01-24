@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import FilePicker from "./../FilePicker";
 import { saveSoundEffect } from "../../utils/soundEffectsDB";
 import { useToast } from "../ToastProvider";
 
-const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const VALID_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/x-m4a'];
 
@@ -31,10 +32,15 @@ export default function SoundEffectPicker({ onAdded }) {
   };
 
   return (
-    <div className="bg-sky-100 p-4 rounded-md w-full flex flex-col gap-2">
-      <label className="font-semibold">Ajout Effet Sonore:</label>
+    <div className="w-full flex flex-col gap-3">
+      <label
+        className="font-medium text-sm"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        Ajout Effet Sonore:
+      </label>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-3 items-center flex-wrap">
         <FilePicker
           label="Choisir un son"
           accept="audio/*"
@@ -46,12 +52,15 @@ export default function SoundEffectPicker({ onAdded }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nom de l'effet"
-          className="border p-2 rounded w-64"
+          className="input flex-1 min-w-[200px]"
         />
       </div>
 
       {file && (
-        <p className="text-sm text-gray-500 italic">
+        <p
+          className="text-sm italic"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
           Fichier sélectionné: {file.name}
         </p>
       )}
@@ -82,8 +91,25 @@ export default function SoundEffectPicker({ onAdded }) {
             setIsLoading(false);
           }
         }}
-        className="mt-2 px-4 py-2 bg-green-500 text-white font-semibold rounded hover:bg-green-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+        className="mt-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+        style={{
+          backgroundColor: isLoading ? 'var(--color-bg-elevated)' : 'var(--color-success)',
+          color: 'white',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          opacity: isLoading ? 0.7 : 1
+        }}
+        onMouseEnter={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.backgroundColor = 'var(--color-success-hover)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.backgroundColor = 'var(--color-success)';
+          }
+        }}
       >
+        {isLoading && <Loader2 size={16} className="animate-spin" />}
         {isLoading ? "Enregistrement..." : "Valider"}
       </button>
     </div>
