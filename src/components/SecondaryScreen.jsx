@@ -16,34 +16,67 @@ function PlayerContent({ time, hint, backgroundImage }) {
 
   return (
     <div
-      className="flex flex-col justify-start items-stretch h-screen w-screen text-center px-4"
+      className="flex flex-col justify-start items-stretch h-screen w-screen text-center"
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundColor: backgroundImage ? undefined : '#0f172a',
+        fontFamily: "'Roboto', system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* Timer */}
-      <div className="flex items-center justify-center h-1/3 p-12 text-center">
-        <h1 className="text-6xl font-bold rounded-md px-10 py-4 bg-sky-100/90 backdrop-blur">
-          {time}
-        </h1>
+      {/* Timer - sleek glass morphism design */}
+      <div className="flex items-center justify-center h-1/3 p-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          style={{
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: '1.5rem',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.15)',
+            padding: '1.5rem 3rem',
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 'clamp(3rem, 8vw, 6rem)',
+              fontWeight: '700',
+              color: '#f8fafc',
+              textShadow: '0 0 30px rgba(59, 130, 246, 0.4)',
+              letterSpacing: '0.05em',
+              margin: 0,
+            }}
+          >
+            {time}
+          </h1>
+        </motion.div>
       </div>
 
-      {/* Hint with animations */}
-      <div className="h-2/3 w-full flex items-center justify-center relative">
-        {/* Subtle 1s glow pulse every time the hint changes */}
+      {/* Hint with sleek animations */}
+      <div className="h-2/3 w-full flex items-center justify-center relative px-8">
+        {/* Glow effect when hint changes */}
         <AnimatePresence>
           {hint && (
             <motion.div
-              key={`pulse-${animKey}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1.05 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              className="absolute w-[82%] h-[48%] bg-sky-300/20 rounded-2xl blur-md"
-              style={{ pointerEvents: "none" }}
+              key={`glow-${animKey}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 0.6, scale: 1.02 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4 }}
+              style={{
+                position: 'absolute',
+                width: '85%',
+                height: '55%',
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%)',
+                borderRadius: '2rem',
+                filter: 'blur(30px)',
+                pointerEvents: 'none',
+              }}
             />
           )}
         </AnimatePresence>
@@ -51,14 +84,35 @@ function PlayerContent({ time, hint, backgroundImage }) {
         <AnimatePresence mode="wait">
           {hint ? (
             <motion.div
-              key={`hint-${animKey}`}  // ensures re-mount on any hint change
-              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              key={`hint-${animKey}`}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -12, scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 260, damping: 22, mass: 0.6 }}
-              className="bg-sky-200/95 rounded-2xl px-8 py-10 text-6xl w-[80%] shadow-2xl backdrop-blur"
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20, mass: 0.8 }}
+              style={{
+                background: 'rgba(15, 23, 42, 0.9)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderRadius: '2rem',
+                padding: 'clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem)',
+                width: '85%',
+                maxWidth: '1200px',
+                border: '1px solid rgba(148, 163, 184, 0.15)',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 60px rgba(59, 130, 246, 0.1)',
+              }}
             >
-              <p className="m-0 leading-snug">{hint}</p>
+              <p
+                style={{
+                  fontSize: 'clamp(2rem, 5vw, 4rem)',
+                  fontWeight: '500',
+                  color: '#f1f5f9',
+                  lineHeight: '1.4',
+                  margin: 0,
+                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                }}
+              >
+                {hint}
+              </p>
             </motion.div>
           ) : null}
         </AnimatePresence>

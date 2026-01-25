@@ -1,6 +1,17 @@
+import { useState } from "react";
 import { Trophy, Skull, X } from "lucide-react";
 
 export default function EndSessionModal({ onVictory, onDefeat, onCancel, onDismiss }) {
+  const [comments, setComments] = useState("");
+
+  const handleVictory = () => {
+    onVictory(comments.trim());
+  };
+
+  const handleDefeat = () => {
+    onDefeat(comments.trim());
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"
@@ -54,10 +65,43 @@ export default function EndSessionModal({ onVictory, onDefeat, onCancel, onDismi
             Comment s'est terminée cette session ?
           </p>
 
+          {/* Comments textarea */}
+          <div>
+            <label
+              htmlFor="session-comments"
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Commentaires
+            </label>
+            <textarea
+              id="session-comments"
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder="Notes sur cette session (optionnel)..."
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl text-sm resize-none transition-all duration-200"
+              style={{
+                backgroundColor: 'var(--color-bg-tertiary)',
+                color: 'var(--color-text-primary)',
+                border: '1px solid var(--color-border-light)',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-accent-primary)';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border-light)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
           <div className="flex flex-col gap-3">
             {/* Victory button */}
             <button
-              onClick={onVictory}
+              onClick={handleVictory}
               className="flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-200"
               style={{
                 backgroundColor: 'rgba(34, 197, 94, 0.2)',
@@ -81,7 +125,7 @@ export default function EndSessionModal({ onVictory, onDefeat, onCancel, onDismi
 
             {/* Defeat button */}
             <button
-              onClick={onDefeat}
+              onClick={handleDefeat}
               className="flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-200"
               style={{
                 backgroundColor: 'rgba(239, 68, 68, 0.2)',

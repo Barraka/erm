@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Bell, X } from "lucide-react";
 import FilePicker from "./../FilePicker";
 import { getAsset, saveAsset } from "../../utils/soundEffectsDB";
 
@@ -14,11 +15,22 @@ export default function HintSoundPicker({ onChange }) {
   }, []);
 
   return (
-    <div className="flex items-center gap-4 justify-between bg-sky-100 p-4 rounded-md w-full">
-      <label className="font-semibold whitespace-nowrap">Son Indice:</label>
+    <div
+      className="flex items-center gap-4 p-4 rounded-xl w-full"
+      style={{
+        backgroundColor: 'var(--color-bg-tertiary)',
+        border: '1px solid var(--color-border-light)'
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <Bell size={18} style={{ color: 'var(--color-text-muted)' }} />
+        <label className="font-medium whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>
+          Son Indice:
+        </label>
+      </div>
 
       <FilePicker
-        label="Choisir un son"
+        label="Choisir"
         accept="audio/*"
         onFileSelected={(file) => {
           const reader = new FileReader();
@@ -33,7 +45,10 @@ export default function HintSoundPicker({ onChange }) {
         }}
       />
 
-      <p className="text-sm text-gray-800 flex-grow">
+      <p
+        className="text-sm flex-grow truncate"
+        style={{ color: fileName ? 'var(--color-text-secondary)' : 'var(--color-text-muted)' }}
+      >
         {fileName || "Aucun fichier sélectionné"}
       </p>
 
@@ -44,9 +59,17 @@ export default function HintSoundPicker({ onChange }) {
           onChange(null);
           setFileName("");
         }}
-        className="px-4 py-2 bg-stone-400 text-white font-semibold rounded hover:bg-stone-600 transition"
+        disabled={!fileName}
+        className="p-2 rounded-lg transition-all duration-200 flex items-center gap-1"
+        style={{
+          backgroundColor: fileName ? 'var(--color-danger)' : 'var(--color-bg-elevated)',
+          color: 'white',
+          opacity: !fileName ? 0.5 : 1,
+          cursor: !fileName ? 'not-allowed' : 'pointer'
+        }}
+        title="Retirer"
       >
-        Retirer
+        <X size={16} />
       </button>
     </div>
   );

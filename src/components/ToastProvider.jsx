@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import closeImg from "../assets/close.png";
+import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
 
 const ToastContext = createContext();
 
@@ -14,40 +14,68 @@ export function ToastProvider({ children }) {
     }, duration);
   };
 
+  const getToastStyles = (type) => {
+    switch (type) {
+      case "success":
+        return {
+          bg: 'var(--color-success)',
+          icon: CheckCircle
+        };
+      case "error":
+        return {
+          bg: 'var(--color-danger)',
+          icon: AlertCircle
+        };
+      default:
+        return {
+          bg: 'var(--color-bg-tertiary)',
+          icon: Info
+        };
+    }
+  };
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div className="fixed top-6 left-1/2 transform -translate-x-1/2 space-y-3 z-50">
+        {toasts.map(({ id, message, type }) => {
+          const styles = getToastStyles(type);
+          const IconComponent = styles.icon;
 
-        {toasts.map(({ id, message, type }) => (
-          <div
-            key={id}
-            className={`relative pr-10 pl-4 py-2 rounded shadow text-white transition-all duration-500 ease-in-out opacity-100 transform animate-slidein ${
-  type === "success"
-    ? "bg-green-600"
-    : type === "error"
-    ? "bg-red-600"
-    : "bg-gray-700"
-}`}
-
-          >
-            <span>{message}</span>
-            <button
-                onClick={() =>
-                setToasts((prev) => prev.filter((t) => t.id !== id))
-                }
-                className="absolute top-1.5 right-2 text-white text-sm hover:text-gray-300"
-                title="Fermer"
+          return (
+            <div
+              key={id}
+              className="relative flex items-center gap-3 pr-10 pl-4 py-3 rounded-xl shadow-lg transition-all duration-300 ease-out slide-up"
+              style={{
+                backgroundColor: styles.bg,
+                color: 'white',
+                minWidth: '280px',
+                boxShadow: 'var(--shadow-lg)'
+              }}
             >
-                <img
-                  src={closeImg}
-                  alt="closeImg"
-                  title="closeImg"
-                  className="w-5 h-5 cursor-pointer hover:bg-sky-400 bg-sky-100 rounded-full"
-                  />
-            </button>
-          </div>
-        ))}
+              <IconComponent size={18} />
+              <span className="font-medium text-sm">{message}</span>
+              <button
+                onClick={() =>
+                  setToasts((prev) => prev.filter((t) => t.id !== id))
+                }
+                className="absolute top-1/2 -translate-y-1/2 right-3 p-1 rounded-lg transition-all duration-150"
+                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                title="Fermer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );

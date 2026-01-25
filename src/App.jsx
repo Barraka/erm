@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings } from "lucide-react";
+import { Settings, BarChart3 } from "lucide-react";
 import TimerDisplay from "./components/TimerDisplay";
 import SecondaryScreen from "./components/SecondaryScreen";
 import SettingsModal from "./components/SettingsModal";
+import StatsModal from "./components/StatsModal";
 import ManageHints from "./components/ManageHints";
 import ManageScreen from "./components/ManageScreen";
 import EndSessionModal from "./components/EndSessionModal";
 import hintSoundDefault from "./assets/hint.mp3";
+import logo from "./assets/logo.png";
 import { getAllSoundEffects, getHints, saveHints, getAsset, saveAsset, filterMusicTracks, filterSoundEffects, saveSession } from './utils/soundEffectsDB';
 import SoundEffectPlayer from "./components/SoundEffectPlayer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
 import { TimerProvider, useTimerContext } from "./contexts/TimerContext";
+import { RoomControllerProvider } from "./contexts/RoomControllerContext";
 import { useToast } from "./components/ToastProvider";
+import PropsPanel from "./components/PropsPanel";
 
 
 function AppContent() {
@@ -24,6 +28,7 @@ function AppContent() {
   const [playerWindow, setPlayerWindow] = useState(null);
   const containerRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [showEndSessionModal, setShowEndSessionModal] = useState(false);
   const [hintsGivenCount, setHintsGivenCount] = useState(0);
   const [backgroundImage, setBackgroundImage] = useState(null);
@@ -233,13 +238,14 @@ function AppContent() {
   };
 
   // Handle session end with result
-  const handleSessionEnd = async (result) => {
+  const handleSessionEnd = async (result, comments = "") => {
     try {
       await saveSession({
         result,
         roomDuration,
         timeRemaining: seconds,
         hintsGiven: hintsGivenCount,
+        comments,
       });
       showToast(result === 'victory' ? 'Victoire enregistrée !' : 'Défaite enregistrée.', 'success');
     } catch (error) {
@@ -267,11 +273,39 @@ function AppContent() {
     <div className="min-h-screen p-6 md:p-8" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
       {/* Header */}
       <header className="card flex items-center justify-between p-4 mb-6 fade-in">
-        <div className="flex-1" />
+        <div className="flex-1 flex items-center -my-4 -ml-4">
+          <img
+            src={logo}
+            alt="Escape Yourself"
+            className="h-14 w-auto object-contain"
+          />
+        </div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-wide" style={{ color: 'var(--color-text-primary)' }}>
           Escape Room Manager
         </h1>
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end gap-2">
+          <button
+            onClick={() => setShowStats(true)}
+            className="p-2.5 rounded-xl transition-all duration-200"
+            style={{
+              backgroundColor: 'var(--color-bg-tertiary)',
+              color: 'var(--color-text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-accent-primary)';
+              e.currentTarget.style.color = 'white';
+              e.currentTarget.style.boxShadow = 'var(--shadow-glow)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+              e.currentTarget.style.color = 'var(--color-text-secondary)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            title="Statistiques"
+            aria-label="Ouvrir les statistiques"
+          >
+            <BarChart3 size={22} />
+          </button>
           <button
             onClick={() => setShowSettings(true)}
             className="p-2.5 rounded-xl transition-all duration-200 hover:rotate-90"
@@ -297,6 +331,10 @@ function AppContent() {
         </div>
       </header>
 
+      {showStats && (
+        <StatsModal onClose={() => setShowStats(false)} />
+      )}
+
       {showSettings && (
         <SettingsModal
           onClose={() => setShowSettings(false)}
@@ -320,8 +358,8 @@ function AppContent() {
 
       {showEndSessionModal && (
         <EndSessionModal
-          onVictory={() => handleSessionEnd('victory')}
-          onDefeat={() => handleSessionEnd('defeat')}
+          onVictory={(comments) => handleSessionEnd('victory', comments)}
+          onDefeat={(comments) => handleSessionEnd('defeat', comments)}
           onCancel={handleCancelEndSession}
           onDismiss={() => setShowEndSessionModal(false)}
         />
@@ -348,6 +386,8 @@ function AppContent() {
       />
 
       <SoundEffectPlayer effects={filterSoundEffects(soundEffects)} />
+
+      <PropsPanel />
 
       <ManageHints
         inputValue={inputValue}
@@ -377,9 +417,11 @@ function AppContent() {
 
 function App() {
   return (
-    <TimerProvider initialSeconds={60 * 60}>
-      <AppContent />
-    </TimerProvider>
+    <RoomControllerProvider>
+      <TimerProvider initialSeconds={60 * 60}>
+        <AppContent />
+      </TimerProvider>
+    </RoomControllerProvider>
   );
 }
 

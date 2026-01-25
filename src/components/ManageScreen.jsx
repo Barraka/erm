@@ -1,17 +1,21 @@
+import { Monitor, MonitorOff } from "lucide-react";
+
 export default function ManageScreen({ openPlayerWindow, closePlayerWindow }) {
   return (
-    <div className="mt-4 space-x-2 flex justify-center">
+    <div className="flex justify-center gap-3 mt-4">
       <button
         onClick={openPlayerWindow}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+        className="btn btn-primary px-5 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
       >
+        <Monitor size={18} />
         Ouvrir Écran Secondaire
       </button>
 
       <button
         onClick={closePlayerWindow}
-        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+        className="btn btn-danger px-5 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
       >
+        <MonitorOff size={18} />
         Fermer Écran Secondaire
       </button>
     </div>

@@ -1,6 +1,4 @@
-import playIcon from "../assets/play.png";
-import pauseIcon from "../assets/pause.png";
-import stopIcon from "../assets/stop.png";
+import { Play, Pause, Square } from "lucide-react";
 
 export default function Controls({
   onPlay,
@@ -14,45 +12,91 @@ export default function Controls({
 }) {
   // Size presets for consistent button + icon sizing
   const sizes = {
-    sm: { btn: "px-2 py-1", img: "w-4 h-4" },
-    md: { btn: "px-3 py-2", img: "w-5 h-5" },
-    lg: { btn: "px-4 py-3", img: "w-6 h-6" },
+    sm: { btn: "p-1.5", icon: 14 },
+    md: { btn: "p-2", icon: 18 },
+    lg: { btn: "p-2.5", icon: 22 },
   };
   const s = sizes[size] || sizes.md;
+
+  const baseButtonClass = `${s.btn} rounded-lg transition-all duration-200 flex items-center justify-center`;
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <button
         onClick={onPlay}
-        className={`${s.btn} rounded bg-green-400 text-white hover:bg-green-600`}
+        className={baseButtonClass}
+        style={{
+          backgroundColor: 'var(--color-success)',
+          color: 'white'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--color-success-hover)';
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--color-success)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
         title={titles.play}
         aria-label={titles.play}
       >
-        <img src={playIcon} alt={titles.play} className={s.img} />
+        <Play size={s.icon} />
       </button>
 
       <button
         onClick={onPause}
         disabled={!canPause}
-        className={`${s.btn} rounded text-white ${
-          canPause ? "bg-yellow-300 hover:bg-yellow-600" : "bg-gray-400 cursor-not-allowed"
-        }`}
+        className={baseButtonClass}
+        style={{
+          backgroundColor: canPause ? 'var(--color-warning)' : 'var(--color-bg-elevated)',
+          color: 'white',
+          cursor: canPause ? 'pointer' : 'not-allowed',
+          opacity: canPause ? 1 : 0.5
+        }}
+        onMouseEnter={(e) => {
+          if (canPause) {
+            e.currentTarget.style.backgroundColor = 'var(--color-warning-hover)';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (canPause) {
+            e.currentTarget.style.backgroundColor = 'var(--color-warning)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }
+        }}
         title={titles.pause}
         aria-label={titles.pause}
       >
-        <img src={pauseIcon} alt={titles.pause} className={s.img} />
+        <Pause size={s.icon} />
       </button>
 
       <button
         onClick={onStop}
         disabled={!canStop}
-        className={`${s.btn} rounded text-white ${
-          canStop ? "bg-red-300 hover:bg-red-600" : "bg-gray-400 cursor-not-allowed"
-        }`}
+        className={baseButtonClass}
+        style={{
+          backgroundColor: canStop ? 'var(--color-danger)' : 'var(--color-bg-elevated)',
+          color: 'white',
+          cursor: canStop ? 'pointer' : 'not-allowed',
+          opacity: canStop ? 1 : 0.5
+        }}
+        onMouseEnter={(e) => {
+          if (canStop) {
+            e.currentTarget.style.backgroundColor = 'var(--color-danger-hover)';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (canStop) {
+            e.currentTarget.style.backgroundColor = 'var(--color-danger)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }
+        }}
         title={titles.stop}
         aria-label={titles.stop}
       >
-        <img src={stopIcon} alt={titles.stop} className={s.img} />
+        <Square size={s.icon} />
       </button>
     </div>
   );

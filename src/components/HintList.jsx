@@ -1,9 +1,5 @@
 import { useRef, useState } from "react";
-import addIcon from '../assets/add.png'; // adjust path if needed
-import closeImg from '../assets/close.png'; 
-import checkImg from '../assets/check.png';
-import delImg from "../assets/delete.png";
-import editImg from "../assets/edit.png";
+import { Plus, X, Check, Trash2, Pencil } from "lucide-react";
 
 export default function HintList({ hints, onSelect, onUpdate, onDelete }) {
   const listRef = useRef(null);
@@ -14,126 +10,150 @@ export default function HintList({ hints, onSelect, onUpdate, onDelete }) {
   const [addingNew, setAddingNew] = useState(false);
   const [newHintValue, setNewHintValue] = useState("");
 
+  const IconButton = ({ onClick, icon: Icon, variant = "default", title }) => {
+    const colors = {
+      default: { bg: 'var(--color-bg-elevated)', hover: 'var(--color-accent-primary)', color: 'var(--color-text-secondary)' },
+      success: { bg: 'var(--color-success)', hover: 'var(--color-success-hover)', color: 'white' },
+      danger: { bg: 'var(--color-danger)', hover: 'var(--color-danger-hover)', color: 'white' },
+      ghost: { bg: 'transparent', hover: 'var(--color-bg-elevated)', color: 'var(--color-text-muted)' }
+    };
+    const c = colors[variant];
+
+    return (
+      <button
+        onClick={onClick}
+        title={title}
+        className="p-1.5 rounded-lg transition-all duration-150"
+        style={{ backgroundColor: c.bg, color: c.color }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = c.hover;
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = c.bg;
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        <Icon size={16} />
+      </button>
+    );
+  };
+
   return (
     <div
-      className="relative group mt-4 max-h-96 overflow-y-auto pr-1  text-teal-800 text-xl hover:outline-teal-500 flex justify-start items-stretch flex-col p-4 rounded-md gap-2 h-fit"
+      className="relative flex flex-col gap-2"
       ref={listRef}
     >
       {hints.map((hint, index) => (
         <div
           key={index}
-          className="flex items-center px-4 py-2 bg-white shadow-sm hover:ring-2 hover:ring-sky-300 transition rounded-md cursor-pointer"
+          className="flex items-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all duration-150"
+          style={{
+            backgroundColor: 'var(--color-bg-secondary)',
+            border: '1px solid var(--color-border-light)',
+            color: 'var(--color-text-primary)'
+          }}
           onClick={() => onSelect(hint)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-accent-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border-light)';
+            e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+          }}
         >
-          <div className="flex-grow text-left">
-            {hint}
-          </div>
-
           {editingIndex === index ? (
             <>
               <input
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-grow border px-2 py-1 rounded"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.stopPropagation();
+                    onUpdate(index, editValue);
+                    setEditingIndex(null);
+                  }
+                  if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    setEditingIndex(null);
+                  }
+                }}
+                className="input flex-grow text-sm"
+                autoFocus
               />
-              <button
+              <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdate(index, editValue);
                   setEditingIndex(null);
                 }}
-                className="text-green-600 font-bold cursor-pointer"
-              >
-                <img
-                  src={checkImg}
-                  alt="checkImg"
-                  title="checkImg"
-                  className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                />
-              </button>
-              <button
+                icon={Check}
+                variant="success"
+                title="Confirmer"
+              />
+              <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingIndex(null);
                 }}
-                className="text-gray-500 font-bold cursor-pointer"
-              >
-                <img
-                  src={closeImg}
-                  alt="closeImg"
-                  title="closeImg"
-                  className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                />
-              </button>
+                icon={X}
+                variant="ghost"
+                title="Annuler"
+              />
             </>
           ) : (
             <>
-              <button
+              <div className="flex-grow text-left text-sm">
+                {hint}
+              </div>
+
+              <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingIndex(index);
                   setEditValue(hint);
                   setDeleteConfirmIndex(null);
                 }}
-                className="text-blue-600 cursor-pointer"
-              >
-                <img
-                  src={editImg}
-                  alt="editImg"
-                  title="editImg"
-                  className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                />
-              </button>
+                icon={Pencil}
+                variant="default"
+                title="Modifier"
+              />
 
               {deleteConfirmIndex === index ? (
                 <>
-                  <button
+                  <IconButton
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(index);
                       setDeleteConfirmIndex(null);
                     }}
-                    className="text-red-600 font-bold cursor-pointer"
-                  >
-                    <img
-                      src={checkImg}
-                      alt="checkImg"
-                      title="checkImg"
-                      className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                    />
-                  </button>
-                  <button
+                    icon={Check}
+                    variant="danger"
+                    title="Confirmer la suppression"
+                  />
+                  <IconButton
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteConfirmIndex(null);
                     }}
-                    className="text-gray-500 font-bold cursor-pointer"
-                  >
-                    <img
-                      src={closeImg}
-                      alt="closeImg"
-                      title="closeImg"
-                      className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                    />
-                  </button>
+                    icon={X}
+                    variant="ghost"
+                    title="Annuler"
+                  />
                 </>
               ) : (
-                <button
+                <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
                     setDeleteConfirmIndex(index);
                     setEditingIndex(null);
                   }}
-                  className="text-red-600 cursor-pointer"
-                >
-                  <img
-                    src={delImg}
-                    alt="delImg"
-                    title="delImg"
-                    className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-                  />
-                </button>
+                  icon={Trash2}
+                  variant="default"
+                  title="Supprimer"
+                />
               )}
             </>
           )}
@@ -141,15 +161,35 @@ export default function HintList({ hints, onSelect, onUpdate, onDelete }) {
       ))}
 
       {addingNew ? (
-        <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded shadow-sm">
+        <div
+          className="flex items-center gap-2 px-4 py-3 rounded-lg"
+          style={{
+            backgroundColor: 'var(--color-bg-secondary)',
+            border: '1px solid var(--color-success)'
+          }}
+        >
           <input
             value={newHintValue}
             onChange={(e) => setNewHintValue(e.target.value)}
             onClick={(e) => e.stopPropagation()}
-            className="flex-grow border px-2 py-1 rounded"
-            placeholder="Enter new hint..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newHintValue.trim()) {
+                e.stopPropagation();
+                onUpdate(hints.length, newHintValue.trim());
+                setNewHintValue("");
+                setAddingNew(false);
+              }
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                setAddingNew(false);
+                setNewHintValue("");
+              }
+            }}
+            className="input flex-grow text-sm"
+            placeholder="Nouvel indice..."
+            autoFocus
           />
-          <button
+          <IconButton
             onClick={(e) => {
               e.stopPropagation();
               if (newHintValue.trim()) {
@@ -158,44 +198,46 @@ export default function HintList({ hints, onSelect, onUpdate, onDelete }) {
                 setAddingNew(false);
               }
             }}
-            className="text-green-600 font-bold cursor-pointer"
-          >
-            <img
-              src={checkImg}
-              alt="checkImg"
-              title="checkImg"
-              className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-            />
-          </button>
-          <button
+            icon={Check}
+            variant="success"
+            title="Ajouter"
+          />
+          <IconButton
             onClick={(e) => {
               e.stopPropagation();
               setAddingNew(false);
               setNewHintValue("");
             }}
-            className="text-gray-500 font-bold cursor-pointer"
-          >
-            <img
-              src={closeImg}
-              alt="closeImg"
-              title="closeImg"
-              className="w-6 h-6 cursor-pointer hover:bg-sky-300 bg-sky-200 rounded-sm"
-            />
-          </button>
+            icon={X}
+            variant="ghost"
+            title="Annuler"
+          />
         </div>
       ) : (
-        <div className="flex justify-center pt-2 w-fit mx-auto">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setAddingNew(true);
-            }}
-            className="p-2 outline outline-2 hover:outline-cyan-500 transition bg-slate-200 min-w-48 rounded-md flex justify-center"
-            title="Ajouter indice"
-          >
-            <img src={addIcon} alt="Add new hint" className="w-6 h-6" />
-          </button>
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setAddingNew(true);
+          }}
+          className="flex items-center justify-center gap-2 py-3 rounded-lg transition-all duration-150 text-sm font-medium"
+          style={{
+            backgroundColor: 'var(--color-bg-secondary)',
+            border: '1px dashed var(--color-border)',
+            color: 'var(--color-text-muted)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-accent-primary)';
+            e.currentTarget.style.color = 'var(--color-accent-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+            e.currentTarget.style.color = 'var(--color-text-muted)';
+          }}
+          title="Ajouter indice"
+        >
+          <Plus size={18} />
+          Ajouter un indice
+        </button>
       )}
     </div>
   );
