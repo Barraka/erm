@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Wifi, WifiOff, CheckCircle2, Circle, ChevronDown, ChevronUp, Unlock, RotateCcw, Zap } from 'lucide-react';
+import { Wifi, WifiOff, CheckCircle2, Unlock, RotateCcw } from 'lucide-react';
 import { useRoomController } from '../contexts/RoomControllerContext';
 import { useToast } from './ToastProvider';
 
-function PropCard({ prop }) {
-  const { forceSolve, resetProp, triggerSensor, session } = useRoomController();
+function PropCard({ prop, compact = false }) {
+  const { forceSolve, resetProp, session } = useRoomController();
   const { showToast } = useToast();
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { propId, name, online, solved, override, startedAt, solvedAt, sensors } = prop;
@@ -44,19 +43,92 @@ function PropCard({ prop }) {
     setLoading(false);
   };
 
-  const handleTriggerSensor = async (sensorId, label) => {
-    try {
-      await triggerSensor(propId, sensorId);
-      showToast(`${label} déclenché`, 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
   const timeSpent = getTimeSpent();
   const hasSensors = sensors && sensors.length > 0;
   const triggeredCount = hasSensors ? sensors.filter(s => s.triggered).length : 0;
+  const allTriggered = hasSensors && triggeredCount === sensors.length;
 
+  // Compact card for timeline view
+  if (compact) {
+    return (
+      <div
+        className={`prop-card-compact ${solved ? 'solved' : ''} ${!online ? 'offline' : ''}`}
+        style={{
+          '--card-border-color': solved
+            ? 'var(--color-success)'
+            : override
+              ? 'var(--color-warning)'
+              : 'var(--color-border-light)'
+        }}
+      >
+        {/* Header: Name + Status */}
+        <div className="prop-card-header">
+          <div className="prop-card-title">
+            {/* Online/Offline indicator */}
+            {online ? (
+              <Wifi size={14} className="prop-status-icon online" />
+            ) : (
+              <WifiOff size={14} className="prop-status-icon offline" />
+            )}
+            <span className="prop-name">{name}</span>
+            {override && <span className="gm-badge">GM</span>}
+          </div>
+
+          {/* Solved checkmark */}
+          {solved && (
+            <CheckCircle2 size={18} className="solved-icon" />
+          )}
+        </div>
+
+        {/* Time spent (only during active session) */}
+        {session.active && timeSpent && (
+          <div className="prop-time">{timeSpent}</div>
+        )}
+
+        {/* Sensor dots */}
+        {hasSensors && (
+          <div className="sensor-dots">
+            {sensors.map((sensor) => (
+              <div
+                key={sensor.sensorId}
+                className={`sensor-dot ${sensor.triggered ? 'triggered' : 'waiting'}`}
+                title={sensor.label}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Action buttons (icon only) */}
+        <div className="prop-actions">
+          {!solved && online && (
+            <button
+              onClick={handleForceSolve}
+              disabled={loading}
+              className="prop-action-btn solve"
+              title="Résoudre"
+            >
+              <Unlock size={14} />
+            </button>
+          )}
+          {online && (
+            <button
+              onClick={handleReset}
+              disabled={loading}
+              className="prop-action-btn reset"
+              title="Réinitialiser"
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+          {!online && (
+            <span className="offline-label">Hors ligne</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Original full-size card (kept for backwards compatibility)
   return (
     <div
       className="card p-4 transition-all duration-200"
@@ -68,19 +140,14 @@ function PropCard({ prop }) {
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {/* Online indicator */}
           {online ? (
             <Wifi size={16} style={{ color: 'var(--color-success)' }} />
           ) : (
             <WifiOff size={16} style={{ color: 'var(--color-text-muted)' }} />
           )}
-
-          {/* Prop name */}
           <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
             {name}
           </span>
-
-          {/* Override badge */}
           {override && (
             <span
               className="text-xs px-2 py-0.5 rounded-full"
@@ -90,103 +157,38 @@ function PropCard({ prop }) {
             </span>
           )}
         </div>
-
-        {/* Solved indicator */}
         {solved ? (
           <CheckCircle2 size={20} style={{ color: 'var(--color-success)' }} />
         ) : (
-          <Circle size={20} style={{ color: 'var(--color-text-muted)' }} />
+          <div size={20} style={{ color: 'var(--color-text-muted)' }} />
         )}
       </div>
 
-      {/* Time spent */}
       {session.active && timeSpent && (
         <div className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>
           Temps: {timeSpent}
         </div>
       )}
 
-      {/* Sensors progress */}
       {hasSensors && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span style={{ color: 'var(--color-text-secondary)' }}>
-              Capteurs: {triggeredCount}/{sensors.length}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              Capteurs:
             </span>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="p-1 rounded transition-colors"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-          </div>
-
-          {/* Progress bar */}
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${(triggeredCount / sensors.length) * 100}%`,
-                backgroundColor: triggeredCount === sensors.length
-                  ? 'var(--color-success)'
-                  : 'var(--color-accent-primary)'
-              }}
-            />
-          </div>
-
-          {/* Expanded sensors list */}
-          {expanded && (
-            <div className="mt-3 space-y-2">
+            <div className="flex gap-1">
               {sensors.map((sensor) => (
                 <div
                   key={sensor.sensorId}
-                  className="flex items-center justify-between p-2 rounded"
-                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    {sensor.triggered ? (
-                      <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
-                    ) : (
-                      <Circle size={14} style={{ color: 'var(--color-text-muted)' }} />
-                    )}
-                    <span
-                      className="text-sm"
-                      style={{
-                        color: sensor.triggered
-                          ? 'var(--color-text-primary)'
-                          : 'var(--color-text-secondary)'
-                      }}
-                    >
-                      {sensor.label}
-                    </span>
-                  </div>
-
-                  {/* Trigger button (only if not triggered and online) */}
-                  {!sensor.triggered && online && (
-                    <button
-                      onClick={() => handleTriggerSensor(sensor.sensorId, sensor.label)}
-                      className="p-1.5 rounded transition-colors"
-                      style={{
-                        backgroundColor: 'var(--color-bg-elevated)',
-                        color: 'var(--color-text-secondary)'
-                      }}
-                      title="Déclencher manuellement"
-                    >
-                      <Zap size={14} />
-                    </button>
-                  )}
-                </div>
+                  className={`sensor-dot ${sensor.triggered ? 'triggered' : 'waiting'}`}
+                  title={sensor.label}
+                />
               ))}
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Action buttons */}
       <div className="flex gap-2 mt-3">
         {!solved && online && (
           <button
@@ -203,7 +205,6 @@ function PropCard({ prop }) {
             Résoudre
           </button>
         )}
-
         {online && (
           <button
             onClick={handleReset}
@@ -219,7 +220,6 @@ function PropCard({ prop }) {
             Reset
           </button>
         )}
-
         {!online && (
           <div
             className="flex-1 text-center py-2 text-sm"

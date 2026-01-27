@@ -227,6 +227,21 @@ WebSocket connection to the Room Controller (MiniPC).
 - `.fade-in`, `.slide-up` - Entrance animations
 - `.volume-slider` - Styled range inputs
 
+### Timeline Classes (PropsPanel)
+- `.props-timeline-container` - Horizontal scroll container
+- `.props-timeline` - Flex row for steps
+- `.step-column` - Vertical stack for parallel props
+- `.step-badge` - Circled number (①②③)
+- `.step-connector` - Arrow icon container
+
+### PropCard Classes
+- `.prop-card-compact` - Timeline view card (fixed width)
+- `.prop-card-compact.solved` - Green glow effect
+- `.prop-card-compact.offline` - Dimmed appearance
+- `.sensor-dots` - Row of status indicators
+- `.sensor-dot.waiting` - Red dot
+- `.sensor-dot.triggered` - Green dot with glow
+
 ---
 
 ## Important Implementation Details
@@ -273,19 +288,27 @@ URL.revokeObjectURL(url);
 
 ---
 
-## Recent Work (This Session)
+## Recent Work
 
-### Features Added
+### Timeline UI (Latest)
+1. **Horizontal Timeline** - Props display as horizontal timeline with scrolling
+2. **Step Grouping** - Props grouped by `order` value (same order = parallel)
+3. **Step Badges** - Circled numbers (①②③) for each step
+4. **Arrow Connectors** - Visual flow between steps
+5. **Sensor Dots** - Always-visible status dots (red/green)
+6. **Compact PropCard** - Fixed-width cards with inline actions and glow effects
+
+### Previous Features
 1. **Stats Modal** - Full session history viewer with summary statistics
 2. **Session Comments** - "Commentaires" textarea in EndSessionModal
 3. **Expandable Comments** - Click "Commentaire:" to expand/collapse in history
-4. **Logo in Header** - Escape Yourself logo on left side (negative margins to touch edges)
+4. **Logo in Header** - Escape Yourself logo on left side
 
-### Bug Fixes
-1. **Timer pause bug** - Fixed timer resetting when paused (ref solution above)
+### Previous Bug Fixes
+1. **Timer pause bug** - Fixed timer resetting when paused (ref solution)
 2. **Button layout shift** - Fixed "Fin de Session" button causing layout shifts
 
-### UX Improvements
+### Previous UX Improvements
 1. **Single start button** - "Débuter Session" transforms into control buttons
 2. **Play/Pause toggle** - Combined into single button that changes based on state
 3. **"Fin de Session" always enabled** - Works during pause for debriefing scenarios
@@ -302,19 +325,31 @@ ESP32 Props ←──MQTT──→ Room Controller ←──WebSocket──→ G
                         (MiniPC)                        (this app)
 ```
 
-### Props Panel
-- Displays all configured props with real-time status
-- Shows online/offline, solved/unsolved, sensors progress
-- GM controls: Force solve, Reset, Trigger individual sensors
+### Props Panel - Horizontal Timeline Layout
+- **Horizontal timeline** with horizontal scrolling
+- Props grouped by `order` value into "steps"
+- **Parallel props** (same order) stack vertically within a step
+- **Step badges**: Circled numbers (①②③④⑤⑥⑦⑧⑨⑩)
+- **Arrow connectors** between steps (→)
 - Auto-reconnects with exponential backoff
 
-### Prop Card Features
-- Online/offline indicator (WiFi icon)
-- Solved indicator (checkmark)
-- GM override badge (yellow "GM" tag)
-- Time spent on prop (during active session)
-- Sensor progress bar (expandable list)
-- Individual sensor trigger buttons
+**Timeline Structure:**
+```
+  ①              ②                  ③
+┌────────┐  →  ┌────────┐  →  ┌────────┐
+│ Prop A │     │ Prop B │     │ Prop D │
+└────────┘     ├────────┤     └────────┘
+               │ Prop C │  ← Parallel (same order)
+               └────────┘
+```
+
+### PropCard - Compact Timeline View
+- **Sensor dots**: Always visible (○ red=waiting, ● green=triggered)
+- **Solved state**: Green glow effect + checkmark
+- **Offline state**: Dimmed (opacity 0.5), no action buttons
+- **GM Override**: Yellow "GM" badge
+- **Actions**: Icon-only buttons (Force solve, Reset)
+- **Fixed width** for consistent timeline appearance
 
 ### Related Files
 - **WebSocket Contract**: `../WEBSOCKET_CONTRACT_v1.md`

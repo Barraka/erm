@@ -286,4 +286,248 @@ body {
       transform: translateY(0);
     }
   }
+
+  /* ============================================
+     Props Timeline Styles
+     ============================================ */
+
+  /* Timeline container with horizontal scroll */
+  .props-timeline-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 8px;
+    margin: 0 -4px;
+    padding: 4px;
+  }
+
+  /* Custom scrollbar for timeline */
+  .props-timeline-container::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .props-timeline-container::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+  }
+
+  .props-timeline-container::-webkit-scrollbar-thumb {
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-full);
+  }
+
+  .props-timeline-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-primary);
+  }
+
+  /* Timeline flex container */
+  .props-timeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    min-width: min-content;
+    padding: 8px 0;
+  }
+
+  /* Step column (holds badge + cards) */
+  .step-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+  }
+
+  /* Step badge (circled number) */
+  .step-badge {
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    user-select: none;
+  }
+
+  /* Cards container within step */
+  .step-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* Arrow connector between steps */
+  .step-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    color: var(--color-text-muted);
+    align-self: center;
+    margin-top: 40px; /* Align with cards, accounting for badge */
+  }
+
+  /* ============================================
+     Compact Prop Card (Timeline View)
+     ============================================ */
+
+  .prop-card-compact {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--card-border-color, var(--color-border-light));
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    min-width: 160px;
+    max-width: 200px;
+    transition: all var(--transition-base);
+  }
+
+  .prop-card-compact.offline {
+    opacity: 0.5;
+  }
+
+  .prop-card-compact.solved {
+    border-color: var(--color-success);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3), 0 0 24px rgba(34, 197, 94, 0.15);
+  }
+
+  /* Header */
+  .prop-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .prop-card-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .prop-status-icon {
+    flex-shrink: 0;
+  }
+
+  .prop-status-icon.online {
+    color: var(--color-success);
+  }
+
+  .prop-status-icon.offline {
+    color: var(--color-text-muted);
+  }
+
+  .prop-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gm-badge {
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-warning);
+    color: black;
+    flex-shrink: 0;
+  }
+
+  .solved-icon {
+    color: var(--color-success);
+    flex-shrink: 0;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px var(--color-success));
+    }
+    50% {
+      filter: drop-shadow(0 0 8px var(--color-success));
+    }
+  }
+
+  /* Time display */
+  .prop-time {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+  }
+
+  /* Sensor dots row */
+  .sensor-dots {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .sensor-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: all var(--transition-base);
+  }
+
+  .sensor-dot.waiting {
+    background: var(--color-danger);
+    opacity: 0.8;
+  }
+
+  .sensor-dot.triggered {
+    background: var(--color-success);
+    box-shadow: 0 0 6px var(--color-success);
+  }
+
+  /* Action buttons */
+  .prop-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .prop-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .prop-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .prop-action-btn.solve {
+    background: var(--color-success);
+    color: white;
+  }
+
+  .prop-action-btn.solve:hover:not(:disabled) {
+    background: var(--color-success-hover);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  }
+
+  .prop-action-btn.reset {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .prop-action-btn.reset:hover:not(:disabled) {
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+  }
+
+  .offline-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
 }
