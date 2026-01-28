@@ -1,7 +1,7 @@
 import { Plus, Minus, Play, Pause, Square } from 'lucide-react';
 import { useTimerContext } from '../contexts/TimerContext';
 
-export default function TimerDisplay({ onStart, onEndSession }) {
+export default function TimerDisplay({ onStart, onPause, onResume, onEndSession }) {
   const { time, realTime, addTime, start, pause, isRunning, sessionActive } = useTimerContext();
   const [minutes, seconds] = time.split(":").map(Number);
 
@@ -10,8 +10,14 @@ export default function TimerDisplay({ onStart, onEndSession }) {
     onStart && onStart();
   };
 
+  const handleResume = () => {
+    start();
+    onResume && onResume();
+  };
+
   const handlePause = () => {
     pause();
+    onPause && onPause();
   };
 
   const handleEndSession = () => {
@@ -135,7 +141,7 @@ export default function TimerDisplay({ onStart, onEndSession }) {
               </button>
             ) : (
               <button
-                onClick={handleStart}
+                onClick={handleResume}
                 aria-label="Reprendre le minuteur"
                 className="btn btn-success px-6 py-2.5 text-base font-semibold rounded-xl flex items-center gap-2"
               >

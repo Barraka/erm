@@ -290,13 +290,28 @@ URL.revokeObjectURL(url);
 
 ## Recent Work
 
-### Timeline UI (Latest)
-1. **Horizontal Timeline** - Props display as horizontal timeline with scrolling
-2. **Step Grouping** - Props grouped by `order` value (same order = parallel)
-3. **Step Badges** - Circled numbers (①②③) for each step
-4. **Arrow Connectors** - Visual flow between steps
-5. **Sensor Dots** - Always-visible status dots (red/green)
-6. **Compact PropCard** - Fixed-width cards with inline actions and glow effects
+### Session Sync with Room Controller (Latest)
+- Dashboard now notifies Room Controller on session start/pause/resume/end/abort
+- `App.jsx` calls `rc.startSession()`, `rc.pauseSession()`, `rc.resumeSession()`, `rc.endSession()`, `rc.abortSession()`
+- On session start, Room Controller resets all props and broadcasts `full_state`
+- All RC calls use `.catch()` for graceful fallback when RC is disconnected
+- `TimerDisplay` accepts `onPause` and `onResume` callbacks (separate from `onStart`)
+
+### Props Panel Improvements
+1. **Collapsible section** - Clickable header with animated chevron (matches other sections)
+2. **Puzzle icon** - Section icon matching other dashboard sections
+3. **Title "Enigmes"** - Renamed from "Props"
+4. **Online count badge** - Shows "X/Y" (green when all online, orange otherwise), visible in collapsed state
+5. **Offline indicators** - Red border on offline prop cards
+6. **Step timers** - Per-step elapsed time from session start, freezes green when step solved
+7. **Popover on click** - Click compact PropCard to open popover with sensors + actions
+8. **Popover sensors** - Individual trigger buttons per untriggered sensor
+9. **Popover offline text** - "- hors ligne" in red when prop is offline
+10. **Popover left-aligned** - Fixed clipping on first prop
+
+### Sensor Merging Fix
+- `prop_update` handler in `RoomControllerContext` merges sensors by `sensorId` instead of replacing the array
+- Prevents sensors from disappearing when a partial update arrives
 
 ### Previous Features
 1. **Stats Modal** - Full session history viewer with summary statistics
@@ -346,10 +361,13 @@ ESP32 Props ←──MQTT──→ Room Controller ←──WebSocket──→ G
 ### PropCard - Compact Timeline View
 - **Sensor dots**: Always visible (○ red=waiting, ● green=triggered)
 - **Solved state**: Green glow effect + checkmark
-- **Offline state**: Dimmed (opacity 0.5), no action buttons
+- **Offline state**: Dimmed (opacity 0.5), red border, "- hors ligne" in popover
 - **GM Override**: Yellow "GM" badge
-- **Actions**: Icon-only buttons (Force solve, Reset)
+- **Click popover**: Click card to open popover with sensor list + action buttons
+- **Sensor trigger**: Individual trigger button per untriggered sensor in popover
+- **Actions**: Force Solve + Reset in popover
 - **Fixed width** for consistent timeline appearance
+- **Step timers**: Per-step elapsed time below cards (green when solved)
 
 ### Related Files
 - **WebSocket Contract**: `../WEBSOCKET_CONTRACT_v1.md`
@@ -364,7 +382,7 @@ ESP32 Props ←──MQTT──→ Room Controller ←──WebSocket──→ G
 3. **Hint Clear Button** - Clear hint from secondary screen after players read it
 4. **Sound Preview** - Preview sounds in settings before selecting
 5. **Confirmation for "Ne pas enregistrer"** - Prevent accidental session loss
-6. **Session sync with Room Controller** - Let Room Controller be source of truth for session state
+6. ~~**Session sync with Room Controller**~~ - Done: dashboard now calls RC session commands
 
 ---
 

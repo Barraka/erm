@@ -93,7 +93,15 @@ export function RoomControllerProvider({ children }) {
         case 'prop_update':
           setProps(prev => prev.map(prop => {
             if (prop.propId === payload.propId) {
-              return { ...prop, ...payload.changes };
+              const updated = { ...prop, ...payload.changes };
+              // Merge sensors by sensorId instead of replacing the array
+              if (payload.changes.sensors && prop.sensors) {
+                updated.sensors = prop.sensors.map(s => {
+                  const change = payload.changes.sensors.find(c => c.sensorId === s.sensorId);
+                  return change ? { ...s, ...change } : s;
+                });
+              }
+              return updated;
             }
             return prop;
           }));

@@ -14,7 +14,7 @@ import SoundEffectPlayer from "./components/SoundEffectPlayer";
 import { defaultHints } from "./utils/helperFile";
 import BackgroundMusicPlayer from "./components/BackgroundMusicPlayer";
 import { TimerProvider, useTimerContext } from "./contexts/TimerContext";
-import { RoomControllerProvider } from "./contexts/RoomControllerContext";
+import { RoomControllerProvider, useRoomController } from "./contexts/RoomControllerContext";
 import { useToast } from "./components/ToastProvider";
 import PropsPanel from "./components/PropsPanel";
 
@@ -22,6 +22,7 @@ import PropsPanel from "./components/PropsPanel";
 function AppContent() {
   const { time, seconds, isRunning, roomDuration, updateRoomDuration, reset } = useTimerContext();
   const { showToast } = useToast();
+  const rc = useRoomController();
 
   const [inputValue, setInputValue] = useState("");
   const [hint, setHint] = useState("");
@@ -225,11 +226,12 @@ function AppContent() {
     await saveAsset("roomDuration", value);
   };
 
-  // Callback for TimerDisplay - start music when timer starts
+  // Callback for TimerDisplay - start music + notify Room Controller
   const handleTimerStart = () => {
     if (backgroundTracks.length > 0 && !activeTrackKey) {
       playTrack(backgroundTracks[0]);
     }
+    rc.startSession().catch(err => console.warn('[RC] startSession failed:', err.message));
   };
 
   // Show end session modal
@@ -252,6 +254,7 @@ function AppContent() {
       console.error('Failed to save session:', error);
       showToast('Erreur lors de l\'enregistrement de la session.', 'error');
     }
+    rc.endSession(result, comments).catch(err => console.warn('[RC] endSession failed:', err.message));
     // Reset the timer and state
     reset();
     stopTrack();
@@ -262,6 +265,7 @@ function AppContent() {
 
   // Cancel end session (don't save)
   const handleCancelEndSession = () => {
+    rc.abortSession().catch(err => console.warn('[RC] abortSession failed:', err.message));
     reset();
     stopTrack();
     setHintsGivenCount(0);
@@ -373,6 +377,8 @@ function AppContent() {
 
       <TimerDisplay
         onStart={handleTimerStart}
+        onPause={() => rc.pauseSession().catch(err => console.warn('[RC] pauseSession failed:', err.message))}
+        onResume={() => rc.resumeSession().catch(err => console.warn('[RC] resumeSession failed:', err.message))}
         onEndSession={handleEndSession}
       />
 

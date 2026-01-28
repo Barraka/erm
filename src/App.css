@@ -295,9 +295,8 @@ body {
   .props-timeline-container {
     overflow-x: auto;
     overflow-y: visible;
-    padding-bottom: 8px;
     margin: 0 -4px;
-    padding: 4px;
+    padding: 12px 4px;
   }
 
   /* Custom scrollbar for timeline */
@@ -352,6 +351,19 @@ body {
     width: 100%;
   }
 
+  /* Step timer below cards */
+  .step-timer {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+  }
+
+  .step-timer.solved {
+    color: var(--color-success);
+    font-weight: 600;
+  }
+
   /* Arrow connector between steps */
   .step-connector {
     display: flex;
@@ -367,6 +379,10 @@ body {
      Compact Prop Card (Timeline View)
      ============================================ */
 
+  .prop-card-wrapper {
+    position: relative;
+  }
+
   .prop-card-compact {
     background: var(--color-bg-secondary);
     border: 1px solid var(--card-border-color, var(--color-border-light));
@@ -375,10 +391,22 @@ body {
     min-width: 160px;
     max-width: 200px;
     transition: all var(--transition-base);
+    cursor: pointer;
+  }
+
+  .prop-card-compact:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-text-muted);
+  }
+
+  .prop-card-compact.active {
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 1px var(--color-accent-primary);
   }
 
   .prop-card-compact.offline {
     opacity: 0.5;
+    border-color: var(--color-danger);
   }
 
   .prop-card-compact.solved {
@@ -481,53 +509,163 @@ body {
     box-shadow: 0 0 6px var(--color-success);
   }
 
-  /* Action buttons */
-  .prop-actions {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+  /* Offline hint on compact card */
+  .prop-offline-hint {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin-top: 4px;
   }
 
-  .prop-action-btn {
+  /* ============================================
+     Prop Popover
+     ============================================ */
+
+  .prop-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    min-width: 220px;
+    max-width: 280px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    animation: popover-enter 0.15s ease-out;
+  }
+
+  @keyframes popover-enter {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-4px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  .prop-popover-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .prop-popover-section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .prop-popover-sensors {
+    margin-bottom: 12px;
+  }
+
+  .prop-popover-sensor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .prop-popover-sensor .sensor-dot {
+    flex-shrink: 0;
+  }
+
+  .prop-popover-sensor-label {
+    flex: 1;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .prop-popover-trigger-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     border: none;
     border-radius: var(--radius-md);
+    background: var(--color-warning);
+    color: black;
     cursor: pointer;
+    flex-shrink: 0;
     transition: all var(--transition-fast);
   }
 
-  .prop-action-btn:disabled {
+  .prop-popover-trigger-btn:hover:not(:disabled) {
+    background: var(--color-warning-hover);
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+  }
+
+  .prop-popover-trigger-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .prop-action-btn.solve {
+  .prop-popover-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .prop-popover-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .prop-popover-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .prop-popover-btn.solve {
     background: var(--color-success);
     color: white;
   }
 
-  .prop-action-btn.solve:hover:not(:disabled) {
+  .prop-popover-btn.solve:hover:not(:disabled) {
     background: var(--color-success-hover);
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
   }
 
-  .prop-action-btn.reset {
+  .prop-popover-btn.reset {
     background: var(--color-bg-tertiary);
     color: var(--color-text-secondary);
   }
 
-  .prop-action-btn.reset:hover:not(:disabled) {
+  .prop-popover-btn.reset:hover:not(:disabled) {
     background: var(--color-bg-elevated);
     color: var(--color-text-primary);
   }
 
-  .offline-label {
-    font-size: 0.75rem;
+  .prop-popover-offline {
+    font-size: 0.8rem;
     color: var(--color-text-muted);
     font-style: italic;
+    text-align: center;
+    width: 100%;
+    padding: 4px 0;
   }
 }
